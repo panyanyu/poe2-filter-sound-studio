@@ -1,500 +1,327 @@
-# LLM Context Log
+# LLM 上下文日志
 
-Drop-in briefing for any future LLM picking up this project. Read this first,
-then `CLAUDE.md` (working preferences), then dig into code. The dated
-**Session log** directly below captures the most recent work; sections 1–10
-further down are the older 2026-06-13 snapshot and remain accurate unless a
-later session entry says otherwise.
+给接手这个项目的任何 LLM 的现成简报。先读这里，再读 `CLAUDE.md`（协作偏好），
+然后进代码。下面的**会话记录**按时间倒序，记录最近做过的事；再往下的第 1–10 节是
+更早的快照，除非后加的会话记录明确推翻了某条，否则仍然成立。
 
 ---
 
-## Session log (newest first)
+## 会话记录（最新在上）
 
-### 2026-06-21 — Item Visibility tab
+### 2026-10-22 — 界面全中文化 + 中文字体 + 中文文档
 
-**Goal:** a beginner-friendly tab to flip each filter block between
-**Show** (item drops on the ground) and **Hide** (filter hides it) without
-hand-editing filter text. Hard invariant: changing visibility rewrites ONLY the
-`Show`/`Hide` word in the block header — conditions, sounds, colors,
-`PlayEffect`, `MinimapIcon`, comments, and line endings are all preserved.
+**目标：** 界面全部改成简体中文，术语用国服（WeGame）说法；不做中英切换；过滤器
+文件本身一个字符都不翻。
 
-**Status:** code committed on branch `feature/item-visibility-tab`, pushed,
-[PR #10](https://github.com/xtheredshirtx/poe2-filter-sound-studio/pull/10)
-open and **NOT merged**. A test build `App_v23.exe` (71 MB, onefile+ffmpeg) was
-produced and copied to the repo root for the user to test. `version.txt` bumped
-22→23 locally (gitignored build artifacts: `App_v23.exe`, `dist/`, `build/`;
-`version.txt` change left uncommitted, not on the PR branch). Full pytest suite
-green (138 tests incl. 17 new); `py_compile` clean.
+**状态：** 分支 `feat/zh-cn-ui`，PR
+[#2](https://github.com/panyanyu/poe2-filter-sound-studio/pull/2) 已推送，
+**尚未合并**。`py_compile` 全量通过；**没有做 GUI 启动验证**（本机两套 Python 都
+没装 `customtkinter`），需要用户本地跑 `run.bat` 确认。
 
-**Added:**
-- [features/visibility_manager.py](features/visibility_manager.py) — all core
-  logic, no UI:
-  - `iter_filter_blocks(lines)` — **shared** Show/Hide block-boundary walker
-    (generator of `RawBlock`). Tracks `# [[NNNN]]`/`#  [NNNN]` section +
-    subsection markers on every line (mirrors `main.refresh_filter_data`), so a
-    section header sitting between a block body and the next header attaches to
-    the *following* block. Trims trailing blanks/section markers from each
-    block's `raw_lines`. **Reuse this for any future block-walking tool.**
-  - `VisibilityBlockView` — one table row (start/end line, current+desired
-    visibility, category/subsection, rarity, classes, base_types, item_level,
-    stack_size, sound/effect/minimap summaries, context, raw_lines, risk_level,
-    risk_reasons, stable_key).
-  - `VisibilityChange` + `ApplyResult` dataclasses.
-  - `header_word()`, `rewrite_header_word()` — pure header swap that preserves
-    indentation, trailing comment, and exact EOL (`\n`/`\r\n`/`\r`/none) via
-    `split_eol()`.
-  - `assess_risk()` — High/Medium/Low. Reuses `visual_emphasis.classify_block`
-    tier + valuable-keyword scan (currency, waystone, map, unique, gem, rune,
-    soul core, idol, breach, expedition, boss, divine, exalted, mirror, …) +
-    structural checks (PlayEffect/MinimapIcon, font ≥ 40, no Class+no BaseType
-    = broad/High).
-  - `smart_group_for()` + `SMART_GROUPS` — coarse buckets (Currency,
-    Waystones/Maps, Uniques, Gems, Gear, Flasks/Charms, Runes/Soul Cores/Idols,
-    Other) for the Group dropdown.
-  - `VisibilityManager` — holds `blocks`, binds to the app's *same* `lines` list
-    object. Pending changes live only on `view.desired_visibility` until
-    `apply()`. `apply()` order: validate every target line still starts with
-    Show/Hide (drifted lines skipped, never corrupted) → `make_backup(label=
-    "visibility")` → rewrite header words in place → `save_filter_file(create_
-    backup=False)` → `rebuild()`.
-- [ui/visibility_manager_tab.py](ui/visibility_manager_tab.py) —
-  `VisibilityManagerTab(parent, app)`. Control bar (search + Visibility /
-  Section / Group dropdowns + Refresh), ttk table, per-row right-click menu
-  (Set Shown/Hidden, Reset, Preview raw block), double-click raw-block preview
-  (highlights the line that will change), bulk ops (scoped to selection, or all
-  *visible* rows when nothing selected), Revert Unsaved, and a combined
-  preview+confirmation dialog (`_show_review_dialog`) listing planned changes +
-  Show→Hide/Hide→Show counts + high-risk count + file path + backup location +
-  warnings (hiding valuables / ≥15 blocks at once). Uses native ttk extended
-  multi-select as the "selection" (ttk can't embed per-cell checkboxes). Tiny
-  `_Tooltip` helper (CTk has none). Registers widgets/treeview tags with
-  `app.theme_manager` so it themes natively.
-- [tests/test_visibility.py](tests/test_visibility.py) — 17 tests covering the
-  10 required scenarios (Show↔Hide single-line change, preservation of
-  conditions/sound/color/effect/minimap/comments/EOL, bulk only-selected,
-  revert never edits lines, filter is read-only, risk flagging, section-comment
-  parsing, no-BaseType, multi-BaseType, header-drift skip).
+**新增：**
+- `core/zh.py` —— 显示名 ⇄ 内部英文值的映射层。里面是几张表（外观模式、配色、
+  经济档次模式、置信度、稀有度、音效类型、显隐、价值档次、风险等级）加
+  `*_label()` / `*_value()` 双向函数。**设计要点：内部值永远是英文**，因为
+  `settings.json`、`operation history`、配色查找都以这些字符串为键；中文只活在
+  显示层。
+- `core/fonts.py` —— `install_default_fonts(root)`，把 tkinter 命名字体
+  （`TkDefaultFont`、`TkTextFont`、`TkMenuFont`、`TkHeadingFont` 等）统一成
+  微软雅黑，按 `Microsoft YaHei UI → Microsoft YaHei → 微软雅黑 → SimHei →
+  SimSun → Segoe UI` 的顺序探测。
 
-**Modified:**
-- [main.py](main.py) — added `tab_visibility = self.tabs.add("Item Visibility")`
-  (between Editor and Merge); instantiates `self.visibility_tab =
-  VisibilityManagerTab(...)` in `setup_gui` (guarded try/except); calls
-  `self.visibility_tab.refresh()` at the end of `refresh_filter_data()` so the
-  tab re-syncs from `self.lines` after every load/save and stays consistent
-  with all other tabs.
-- [README.md](README.md) — new "Item Visibility Tab" section + project-layout
-  entries.
+**改动：**
+- 主窗口、`ui/` 全部对话框、`features/smart_merge_ui.py` 的界面文案全部中文化：
+  菜单、页签、工具栏分簇、表格列头与单元格、右键菜单、状态栏、提示/确认/报错弹窗，
+  以及 `HOW_TO_USE_TEXT`（使用说明）和 About / 设置页的长文案。
+- 所有字体字面量：`("Segoe UI Semibold", N)` → `("Microsoft YaHei UI", N, "bold")`，
+  `"Segoe UI"` / `"Arial"` → `"Microsoft YaHei UI"`。等宽字体保留
+  `Consolas` / `Courier`（原始过滤器视图需要等宽）。
+- `features/visibility_manager.py`：`SMART_GROUPS` 标签改成中文（通货、引路石/地图、
+  传奇、技能宝石、装备、药剂/咒符、符文/灵魂核心/神像、其他），`smart_group_for()`
+  的返回值同步改。**这些标签只用于分组显示，不参与文件写入。**
+- `ui/visibility_manager_tab.py`：三个筛选下拉框的取值与判断条件一起改成中文
+  （`全部` / `当前显示` / `当前隐藏` / `全部章节` / `全部分组`）；表格行的显隐词、
+  风险等级、稀有度走 `core/zh.py` 映射。
+- `ui/economy_tier_ui.py`、`ui/tier_sound_dialog.py`：模式与置信度下拉框显示中文，
+  `Mode(...)` 构造前用 `mode_value()` / `conf_value()` 转回英文。
+- `main.py`：`_tree_heading_text`（表格列名）、`_TIER_SORT_RANK`（加中文键）、
+  `tier_label`、`rarity_display`、`sound_type_label` 接入；经济档次/主题/外观三个
+  下拉框改成「显示中文、回调里映射回英文」。
+- `README.md`、`docs/economy_tier_visuals.md`、`docs/development_roadmap.md`、
+  `LLM_CONTEXT.md`（本文件）全部改写为中文。
 
-**Gotchas / notes for next LLM:**
-- The manager mutates `app.lines` **in place** (same object), so an applied
-  toggle is visible to the editor tab immediately; the UI then also calls
-  `app.refresh_filter_data()` to repopulate everything.
-- Source of truth for *which line to edit* is always `start_line` in the live
-  file. `stable_key` (ignores the Show/Hide word, unlike
-  `user_overrides.block_signature` which folds it in) is identity-for-matching
-  only, never used to pick the edit target.
-- `Refresh`, `Revert Unsaved`, and any app reload all **drop** pending toggles
-  (rebuild from disk) — by design, predictable over clever.
-- If the user merges PR #10, remember `version.txt` is currently dirty (23) and
-  the test EXE at repo root is gitignored.
+**给下一个 LLM 的坑：**
+- 新增界面文案时，**纯显示的**直接写中文；**会参与逻辑判断的**（枚举、下拉框选中值、
+  写进设置或文件的东西）必须走 `core/zh.py` 的 `*_label` / `*_value`，否则会把中文
+  写进 `settings.json`、操作历史或 `.filter`，后果是设置失效或过滤器被游戏拒绝。
+- 过滤器语法关键词（`Show`/`Hide`/`Rarity`/`BaseType`/`PlayAlertSound`/
+  `CustomAlertSound`/`SetTextColor`/`PlayEffect`/`MinimapIcon`）**永远保持英文**。
+- 表格里 `stype` 的取值 `Custom`/`Play`/`None` 是逻辑键，只在渲染时翻译成
+  自定义/内置音效/无音效。
+- 中文替换是用脚本按“精确字面量”批量做的，只匹配 `text=` / `label=` / `title(` /
+  `title=` / `placeholder_text=` / `_set_status(` / `messagebox` 这些位置，所以列 id、
+  字体名、色值、正则片段都没被误伤。以后再做类似批量替换，务必保持这个约束。
 
----
+### 2026-06-21 — 物品显隐页签
 
-## 1. What this project is
+**目标：** 给新手一个页签，把每个规则块在**显示**（物品能掉在地上）和**隐藏**之间
+切换，不用手改过滤器文本。硬性不变式：改显隐只重写块首行的 `Show`/`Hide` 这个词，
+条件、音效、颜色、`PlayEffect`、`MinimapIcon`、注释、换行符全部保留。
 
-**POE2 Filter Sound Studio** — a Windows desktop app (CustomTkinter) that
-edits Path of Exile 2 `.filter` files. The original feature set is sound
-replacement / volume tuning / category browsing across a filter's
-Show/Hide blocks. This session added a thick layer of *visual* and
-*safety* tools on top.
+**状态：** 代码在 `feature/item-visibility-tab` 分支，PR #10（旧仓库
+`xtheredshirtx/poe2-filter-sound-studio`），**已合并**。
 
-- Entry point: [main.py](main.py) — `FilterSoundEditor` class.
-- Core parsing: [core/parser.py](core/parser.py) → `FilterParser` + regexes
-  for sounds, colors, sections.
-- Block data model: [core/data_models.py](core/data_models.py) → `FilterBlock`.
-- Persistent app settings: [core/settings.py](core/settings.py) →
-  `AppSettings` dataclass + JSON at `%APPDATA%/POE2FilterSoundEditor/settings.json`.
-- File IO: [core/file_operations.py](core/file_operations.py) → `load_filter_file`,
-  `save_filter_file` (atomic tmp+replace), `make_backup` (timestamped + rotated).
+**新增：**
+- [features/visibility_manager.py](features/visibility_manager.py) —— 全部核心逻辑，
+  不含界面：
+  - `iter_filter_blocks(lines)` —— **共享的** Show/Hide 块边界遍历器（生成
+    `RawBlock`）。它跟踪每行的 `# [[NNNN]]` / `#  [NNNN]` 章节与子章节标记，
+    因此“夹在块体与下一个块首行之间的章节注释”会归属到**后一个**块。每个块的
+    `raw_lines` 会裁掉尾部空行和章节标记。**以后做任何遍历块的工具都复用它。**
+  - `VisibilityBlockView` —— 表格的一行（起止行号、当前/目标显隐、分类/子章节、
+    稀有度、类别、基底、物品等级、堆叠数量、音效/特效/小地图摘要、上下文、
+    `raw_lines`、风险等级、风险原因、`stable_key`）。
+  - `VisibilityChange` / `ApplyResult` 数据类。
+  - `header_word()` / `rewrite_header_word()` —— 纯首行替换，保留缩进、行尾注释
+    和精确换行符（`\n`/`\r\n`/`\r`/无）。
+  - `assess_risk()` —— 高/中/低。复用 `visual_emphasis.classify_block` 的档次 +
+    价值关键词扫描（通货、引路石、地图、传奇、宝石、符文、灵魂核心、神像、裂隙、
+    远征、首领、神圣石、崇高石、魔镜…）+ 结构检查（`PlayEffect`/`MinimapIcon`、
+    字号 ≥ 40、既无 Class 也无 BaseType = 过宽泛/高风险）。
+  - `smart_group_for()` + `SMART_GROUPS` —— 粗略分组，供「分组」下拉使用。
+  - `VisibilityManager` —— 持有 `blocks`，绑定应用**同一个** `lines` 列表对象。
+    待应用改动只存在各视图的 `desired_visibility` 上，`apply()` 才落地。`apply()`
+    的顺序：逐行确认目标行仍以 Show/Hide 开头（漂移的行跳过，绝不写坏）→
+    `make_backup(label="visibility")` → 就地重写首行 → `save_filter_file(create_backup=False)`
+    → `rebuild()`。
+- [ui/visibility_manager_tab.py](ui/visibility_manager_tab.py) —— 表格 + 控制栏 +
+  右键菜单 + 批量操作 + 复核对话框（列出计划改动、Show→Hide/Hide→Show 计数、
+  高风险数量、文件路径、备份位置，以及“隐藏贵重物品 / 一次隐藏 ≥15 块”的警告）。
+- [tests/test_visibility.py](tests/test_visibility.py) —— 17 个测试，覆盖单行替换、
+  各类内容保留、只对选中生效、撤销不写盘、过滤器只读、风险标记、章节注释解析、
+  无 BaseType、多 BaseType、首行漂移跳过。
 
-The user (`panyanyu`) does not use git/GitHub directly — Claude handles
-all VCS via the `gh` CLI per `CLAUDE.md`.
+**已知坑：**
+- 管理器**就地**改 `app.lines`（同一个对象），所以应用后编辑器页签立刻能看到变化；
+  界面随后还会调 `app.refresh_filter_data()` 全量刷新。
+- “改哪一行”的唯一依据始终是文件里的 `start_line`。`stable_key`（不含 Show/Hide 词，
+  不同于 `user_overrides.block_signature`）只用于身份匹配，绝不用来定位编辑目标。
+- `刷新`、`撤销未保存的改动` 以及任何重新加载都会**丢弃**待应用改动（从磁盘重建）——
+  这是刻意的，行为可预期优先于聪明。
 
 ---
 
-## 2. Features added this session
+## 1. 这个项目是什么
 
-In the order they were built:
+**POE2 Filter Sound Studio** —— 一个 Windows 桌面应用（CustomTkinter），用来编辑
+《流放之路 2》的 `.filter` 文件。最初的功能是音效替换 / 音量调整 / 分类浏览，之后
+在上面叠了一层视觉工具和安全工具。
 
-### 2.1 Filter Compatibility Check
-**Goal:** when the game ships an update or the user loads a foreign filter,
-detect unknown/renamed commands and offer auto-fixes without the user having
-to ask an LLM each time.
+- 入口：[main.py](main.py) —— `FilterSoundEditor` 类。
+- 解析核心：[core/parser.py](core/parser.py) → `FilterParser` + 音效/颜色/章节正则。
+- 块模型：[core/data_models.py](core/data_models.py) → `FilterBlock`。
+- 设置持久化：[core/settings.py](core/settings.py) → `AppSettings` +
+  `%APPDATA%/POE2FilterSoundEditor/settings.json`。
+- 文件 IO：[core/file_operations.py](core/file_operations.py) →
+  `load_filter_file`、`save_filter_file`（tmp + 原子替换）、`make_backup`
+  （带时间戳 + 轮转）。
+- 中文显示映射：[core/zh.py](core/zh.py)；中文字体：[core/fonts.py](core/fonts.py)。
 
-- [core/compatibility.py](core/compatibility.py) — `FilterCompatibilityChecker`,
-  `MigrationRulesEngine`, `CompatibilityReport`, `CompatibilityIssue`.
-  Validates POE2 command set, RGB ranges, volume ranges, orphan actions
-  outside Show/Hide.
-- [data/migration_rules.json](data/migration_rules.json) — user-editable
-  rule table. Schema documented inside the file itself in `_rule_schema`.
-  Four rule actions: `command`, `regex`, `allow`, `remove`.
-- [ui/compatibility_dialog.py](ui/compatibility_dialog.py) — modal showing
-  detected issues, per-row Fix? toggles, bulk Select All Fixable, Edit Rules
-  File button.
-- Wired into both load paths in `main.py` + manual Tools → Check Filter
-  Compatibility.
-- Setting: `AppSettings.auto_check_compatibility` (default `True`).
+## 2. 按构建顺序的功能
 
-**Important user-facing affordance:** when no fix exists in the rules, the
-issue is flagged with `auto_fixable=False` and the user is pointed at
-`migration_rules.json`. The user is expected to add their own rules over
-time — no LLM round-trip needed for syntax changes.
+### 2.1 过滤器兼容性检查
+更新或换用别人的过滤器时，检测未知/改名的指令并给出自动修复。
 
-### 2.2 On-load backup snapshots
-**Goal:** every load creates a pristine backup before any tool can mutate
-the file.
+- [core/compatibility.py](core/compatibility.py) —— `FilterCompatibilityChecker`、
+  `MigrationRulesEngine`、`CompatibilityReport`、`CompatibilityIssue`。校验 POE2 指令集、
+  RGB 范围、音量范围、Show/Hide 之外的孤立动作。
+- [data/migration_rules.json](data/migration_rules.json) —— 用户可编辑的规则表，
+  schema 写在文件自己的 `_rule_schema` 里。四种规则动作：`command`、`regex`、
+  `allow`、`remove`。
+- [ui/compatibility_dialog.py](ui/compatibility_dialog.py) —— 模态对话框，逐条显示问题、
+  可选是否修复、全选可修复、编辑规则文件。
+- 接进两条加载路径 + 手动 `过滤器健康 → 检查过滤器兼容性…`。
+- 设置项：`AppSettings.auto_check_compatibility`（默认 `True`）。
 
-- [core/file_operations.py:48](core/file_operations.py:48) — `make_backup`
-  extended with `label` (so `_load_` and `_backup_` snapshots rotate
-  independently) and `skip_if_identical` (so reloading an unchanged file
-  doesn't pile up duplicate copies).
-- Same-second collision bug fixed with `-2`, `-3` suffix tie-break.
-- Hooked into `load_filter` and `load_filter_from_path` via
-  `_snapshot_on_load()`.
-- Setting: `AppSettings.auto_backup_on_load` (default `True`).
-- Backups land in `<filter>_backups/` next to the filter file. Files are
-  named `<name>_load_<timestamp>.filter` vs `<name>_backup_<timestamp>.filter`.
+### 2.2 加载时自动快照
+每次加载都在任何工具改动之前先留一份干净备份。
 
-### 2.3 Visual Tools — emphasis + randomizer
-**Goal:** make valuable items visually pop and let users randomize the
-whole filter into something fresh, *without* changing what shows up.
+- `make_backup` 增加 `label`（`_load_` 与 `_backup_` 各自轮转）和 `skip_if_identical`
+  （同一文件重复加载不会堆副本）；修了同一秒内命名冲突（`-2`、`-3` 结尾）。
+- 设置项：`AppSettings.auto_backup_on_load`（默认 `True`）。
+- 备份落在过滤器旁的 `<过滤器名>_backups/`。
 
-- [features/visual_emphasis.py](features/visual_emphasis.py) — the engine.
-  - `ValueTier` enum (MYTHIC > TOP > HIGH > MID > LOW > JUNK; plus HIDDEN
-    sentinel for Hide blocks that we never restyle).
-  - `classify_block()` — reads three signals in order: Hide header,
-    `$tier->tN` inline tag, then `_SECTION_KEYWORDS` substring match.
-    No live market data. No internet calls.
-  - `BlockStyle` dataclass — every field optional; only set fields get
-    written.
-  - `iter_blocks(lines)` — generator yielding `(start, end, header, section,
-    block_lines)`. Tracks the latest `# [[NNNN]] Title` section header so
-    classify_block can use it.
-  - `apply_style_to_block` — rewrites lines in place, preserves indent and
-    newline style; insertion point skips trailing blanks AND section/
-    subsection comments (which `iter_blocks` includes between blocks).
-  - Two stylers: `EmphasisStyler` (deterministic, preset-driven) and
-    `RandomizerStyler` (seeded, 15 curated palettes).
-  - `StyleChange` is the planned restyle for one block — gets `signature`,
-    `has_override`, and `base_tier` populated when overrides are involved.
-- Touches ONLY: `SetTextColor`, `SetBorderColor`, `SetBackgroundColor`,
-  `SetFontSize`, `PlayEffect`, `MinimapIcon`. Never touches Show/Hide,
-  conditions, or sound commands. Hide blocks are skipped wholesale.
+### 2.3 视觉工具 —— 强化 + 随机化
+让贵重物品更扎眼，也能把整张过滤器随机成一套新观感，同时**不改变哪些物品会显示**。
 
-### 2.4 JSON-backed presets
-**Goal:** edit tier styling and randomizer palettes without code edits.
+- [features/visual_emphasis.py](features/visual_emphasis.py)：
+  `ValueTier`（MYTHIC > TOP > HIGH > MID > LOW > JUNK，另有 HIDDEN 哨兵）、
+  `classify_block()`（顺序读 Hide 首行 → `$tier->tN` 标签 → 章节关键词）、
+  `BlockStyle`（字段全可选，只写设置过的）、`iter_blocks()`、
+  `apply_style_to_block()`、`EmphasisStyler`、`RandomizerStyler`（带种子，15 套配色）。
+- 只碰 `SetTextColor`、`SetBorderColor`、`SetBackgroundColor`、`SetFontSize`、
+  `PlayEffect`、`MinimapIcon`。绝不碰 Show/Hide、条件、音效。Hide 块整体跳过。
 
-- [data/visual_presets.json](data/visual_presets.json) (created on first
-  Edit click via `write_default_presets_file()`).
-- `load_visual_presets()` is *forgiving*: missing fields fall back to code
-  defaults per-tier; malformed palettes are dropped silently with a print;
-  missing file = code defaults entirely.
-- Schema is self-documenting via `_notes` keys in the seed file (lists all
-  valid POE2 named colors and minimap shapes).
+### 2.4 JSON 预设
+- [data/visual_presets.json](data/visual_presets.json)（首次点“编辑”时生成）。
+  加载器很宽容：缺字段回退到代码默认，坏配色静默丢弃，文件不存在就全用默认。
+  文件内 `_notes` 自带 schema 说明（列出合法颜色名和小地图形状）。
 
-### 2.5 Visual Tools dialog (UI)
-- [ui/visual_tools_dialog.py](ui/visual_tools_dialog.py) — two tabs
-  (Emphasize by Tier, Randomize Visuals). Shared toolbar with Edit Presets
-  File / Reload at top.
-- Both tabs preview the plan before committing.
-- Randomizer has seed input for reproducibility.
-- Tier swatches **are clickable** — opens the tier detail dialog (see 2.7).
+### 2.5 视觉工具对话框
+- [ui/visual_tools_dialog.py](ui/visual_tools_dialog.py) —— 两个页签（按档次强化、
+  随机视觉），顶部共用工具栏（编辑预设文件 / 重新载入）。两个页签都是先预览再提交；
+  随机化可填种子以复现；档次色块可点击进入档次详情对话框。
 
-### 2.6 Per-filter user overrides
-**Goal:** "the app remembers my customizations for each filter."
+### 2.6 每个过滤器的用户覆盖
+- [core/user_overrides.py](core/user_overrides.py) —— 侧车文件
+  `<过滤器>.filterstudio.json`，两层覆盖：`tier_presets`（这个过滤器里某档次长什么样）
+  与 `block_overrides`（按稳定签名索引，可改档次或钉死样式）。
+- `block_signature(block_lines)` = `Show | rarity=Unique | base=heavy belt`，
+  由 Show/Hide 词 + Rarity + 排序后的 Class + 排序后的 BaseType 组成，扛得住行序调整、
+  样式变化和注释。
+- 解析优先级（高到低）：块样式覆盖 → 块档次覆盖 → 档次预设覆盖 → 代码默认。
 
-- [core/user_overrides.py](core/user_overrides.py) — sidecar file at
-  `<filter>.filterstudio.json`.
-- `UserOverrides` has two override layers:
-  - `tier_presets: Dict[ValueTier, BlockStyle]` — "for this filter, my MYTHIC
-    looks like X."
-  - `block_overrides: Dict[str, BlockOverride]` — keyed by stable signature.
-    Each `BlockOverride` can move the block to a different tier and/or pin
-    a fully custom style.
-- `block_signature(block_lines)` — `Show | rarity=Unique | base=heavy belt`.
-  Stable across line shuffles, styling changes, comments. Built only from
-  the Show/Hide word + Rarity + sorted Class + sorted BaseType.
-- **Resolution priority** in `EmphasisStyler.plan()` (highest first):
-  1. Per-block style override
-  2. Per-block tier override (mapped via tier preset)
-  3. Tier preset override
-  4. Code default preset
+### 2.7 应用内档次详情对话框
+- [ui/tier_detail_dialog.py](ui/tier_detail_dialog.py) —— 点档次色块打开。含实时
+  预览（原生 `tk.Frame`，颜色按游戏里那样直接上色）、文字/边框/背景三行取色、
+  字号滑杆、PlayEffect（None + 11 色 + 临时勾选）、MinimapIcon（大小/颜色/形状）、
+  块列表右键「移动到某档次」/「移回自动判定档次」、恢复默认 / 移除档次覆盖。
+  改动即存侧车文件，关闭时回调父对话框重新规划。
 
-### 2.7 In-app tier detail dialog
-**Goal:** click a tier box, see what's in it, edit colors/effects/minimap,
-reassign individual blocks — all without touching JSON.
+### 2.8 应用日志
+- [core/app_logging.py](core/app_logging.py) —— `init_logging()`、`get_logger()`、
+  `get_log_path()`、`log_section()`、`shutdown()`。`RotatingFileHandler`（5 MB × 3）。
+  写到 `%APPDATA%/POE2FilterSoundEditor/app_debug.log`，在仓库之外，不可能被误提交。
+  钩住 `sys.excepthook` 和 `tk.Tk.report_callback_exception`；帮助菜单提供
+  “打开调试日志 / 打开日志目录”。
 
-- [ui/tier_detail_dialog.py](ui/tier_detail_dialog.py) — opens from a tier
-  swatch click. Includes:
-  - Live preview (raw tk.Frame so colors paint as POE2 would).
-  - Text/Border/Background color rows backed by existing `ColorPickerDialog`.
-  - Font slider 18–45.
-  - PlayEffect (None + 11 colors + Temp checkbox).
-  - MinimapIcon (size + color + shape with None sentinel).
-  - Block list with right-click "Move to <tier>" and "Reset to heuristic tier".
-  - "Reset to default" and "Remove tier override" actions.
-- Saves to sidecar on click; `on_close` callback re-plans the parent dialog.
-
-### 2.8a Application logging
-**Goal:** "when something breaks, the user can grab one file and hand it to
-an LLM."
-
-- [core/app_logging.py](core/app_logging.py) — `init_logging()`,
-  `get_logger()`, `get_log_path()`, `log_section()`, `shutdown()`.
-- Uses `logging.handlers.RotatingFileHandler` (5 MB × 3 backups).
-- Writes to `%APPDATA%/POE2FilterSoundEditor/app_debug.log` — same folder as
-  `settings.json`. Outside the repo entirely, so it cannot be committed
-  even by accident.
-- Hooks `sys.excepthook` and `tk.Tk.report_callback_exception` so the two
-  classes of silent-death paths get captured automatically.
-- Help menu surfaces "Open Debug Log" and "Open Log Folder" so users can
-  send the file with one click.
-- `print()` debug calls in `core/compatibility.py`, `core/user_overrides.py`,
-  and `features/visual_emphasis.py` have all been converted to logger calls
-  so they appear in the same log file.
-
-### 2.8 Conflict-aware compatibility check
-**Goal:** auto-fixes from migration rules / value validators shouldn't
-silently clobber user customizations.
-
-- `CompatibilityIssue` gained `has_user_override: bool` +
-  `override_summary: str`.
-- `FilterCompatibilityChecker.__init__` takes `overrides=` and computes line
-  ranges for customized blocks during `check()`.
-- In the dialog: conflicts show with amber row tag, ⚠ prefix on Current,
-  default-OFF Fix? checkbox, count in the summary line, excluded from "Select
-  all fixable" bulk toggle.
+### 2.9 冲突感知的兼容性检查
+- `CompatibilityIssue` 增加 `has_user_override` 与 `override_summary`；检查器接收
+  `overrides=` 并算出被自定义块的行范围。对话框里冲突项显示琥珀色行、`⚠` 前缀、
+  默认**不勾选**修复，且不参与“全选可修复”。
 
 ---
 
-## 3. Persistence model (where state lives)
+## 3. 持久化模型
 
-| What | Where | Scope |
-|------|-------|-------|
-| App settings (theme, FFmpeg, autoload, etc.) | `%APPDATA%/POE2FilterSoundEditor/settings.json` | Per-user, per-machine |
-| Migration rules (compatibility check) | `<app>/data/migration_rules.json` | Per-install, shared across all filters |
-| Visual presets (tier styling + randomizer palettes) | `<app>/data/visual_presets.json` | Per-install, shared across all filters |
-| Per-filter overrides (tier customizations + block reassignments) | `<filterdir>/<filtername>.filterstudio.json` | Per-filter |
-| Backups (timestamped) | `<filterdir>/<filtername>_backups/` | Per-filter |
-| Debug log (rotating) | `%APPDATA%/POE2FilterSoundEditor/app_debug.log` | Per-user, per-machine |
+| 内容 | 位置 | 作用域 |
+|------|------|--------|
+| 应用设置（主题、FFmpeg、自动加载等） | `%APPDATA%/POE2FilterSoundEditor/settings.json` | 每用户每机器 |
+| 迁移规则 | `<app>/data/migration_rules.json` | 每份安装，所有过滤器共享 |
+| 视觉预设（档次样式 + 随机配色） | `<app>/data/visual_presets.json` | 每份安装 |
+| 每过滤器覆盖（档次自定义 + 块重分配） | `<过滤器目录>/<名>.filterstudio.json` | 每过滤器 |
+| 备份 | `<过滤器目录>/<名>_backups/` | 每过滤器 |
+| 调试日志 | `%APPDATA%/POE2FilterSoundEditor/app_debug.log` | 每用户每机器 |
+| 经济档次操作历史 | 用户配置目录 | 每用户（供“恢复”用） |
 
-`visual_presets.json` is the *defaults* layer. `<filter>.filterstudio.json`
-is the per-filter override layer. Together: the styler walks defaults →
-tier preset overrides → per-block style overrides.
+`visual_presets.json` 是**默认层**，`<过滤器>.filterstudio.json` 是**覆盖层**。
+遍历顺序：默认 → 档次预设覆盖 → 块样式覆盖。
 
----
-
-## 4. Data flow on a fresh filter load
+## 4. 加载一个过滤器时的数据流
 
 ```
-User picks a filter
+用户选文件
   └─ load_filter()
       ├─ load_filter_file() → self.lines
       ├─ _snapshot_on_load()
       │    └─ make_backup(label="load", skip_if_identical=True)
-      ├─ refresh_filter_data()  [original parser, populates UI]
+      ├─ refresh_filter_data()  [原解析器，填充界面]
       └─ if auto_check_compatibility:
             _run_compatibility_check(auto=True)
-              ├─ load_overrides(filter_path)  [for conflict tagging]
+              ├─ load_overrides(filter_path)  [用于冲突标记]
               ├─ FilterCompatibilityChecker(engine, overrides=...)
               ├─ checker.check(self.lines)
-              └─ if not clean: show_compatibility_dialog(...)
+              └─ 有问题就弹兼容性对话框
 ```
 
-When the user opens Tools → Emphasize by Tier:
+打开 `视觉与档次 → 按档次强化` 时：
 
 ```
 open_visual_tools()
   └─ _VisualToolsDialog
-       ├─ load_visual_presets(presets_path)  [defaults]
-       ├─ load_overrides(filter_path)        [user layer]
+       ├─ load_visual_presets(presets_path)   [默认层]
+       ├─ load_overrides(filter_path)         [用户层]
        ├─ EmphasisStyler(presets=..., overrides=...).plan(lines)
-       └─ render swatches (clickable)
-             └─ on click: open_tier_detail(tier, plan, presets, overrides)
-                  └─ on save: save_overrides(filter_path, overrides)
-                  └─ on close cb: reload + re-plan parent
+       └─ 渲染色块（可点击）
+             └─ 点击：open_tier_detail(tier, plan, presets, overrides)
+                  └─ 保存：save_overrides(filter_path, overrides)
+                  └─ 关闭回调：重载并重新规划父对话框
 ```
 
----
+## 5. 关键架构决策
 
-## 5. Files touched this session
+1. **块签名是稳定身份，不是位置。** 能扛住重新导入、重排、改注释；但条件一变就是
+   另一个块（语义上正确）。
+2. **JSON 加载器一律宽容。** 坏字段只告警并丢弃该条，绝不因为一个 typo 崩掉加载。
+3. **跨模块用延迟 import 破循环依赖。** 新增跨模块钩子时沿用这个模式。
+4. **所有写入走 `os.replace` 原子替换。** 写到一半崩溃也不会截断过滤器。
+5. **备份失败不能阻断加载。** `_snapshot_on_load` 吞掉异常，只在状态栏提示。
+6. **视觉工具只改样式。** Show/Hide、物品条件、音效指令是禁区，这是硬不变式。
+7. **冲突默认不应用。** 兼容性修复若会碰到用户自定义过的块，默认不勾选，必须显式选择
+   才放弃自定义。
+8. **中文只在显示层。** 内部值（枚举、模式、配色名、置信度）保持英文，见 `core/zh.py`。
 
-### Added
-- `core/compatibility.py`
-- `core/user_overrides.py`
-- `data/migration_rules.json`
-- `data/visual_presets.json` *(written by app on first Edit click)*
-- `features/visual_emphasis.py`
-- `ui/compatibility_dialog.py`
-- `ui/tier_detail_dialog.py`
-- `ui/visual_tools_dialog.py`
-- `LLM_CONTEXT.md` *(this file)*
+## 6. 已知限制 / 坑
 
-### Modified
-- `core/file_operations.py` — `make_backup` now takes `label` and
-  `skip_if_identical`; same-second collision tie-break.
-- `core/settings.py` — added `auto_check_compatibility` and
-  `auto_backup_on_load` fields.
-- `main.py` —
-  - imports: compatibility, user_overrides (lazy), visual_tools_dialog
-  - menus: Check Filter Compatibility, Emphasize by Tier, Randomize Visuals
-  - new methods: `_snapshot_on_load`, `_run_compatibility_check`,
-    `check_filter_compatibility`, `emphasize_by_tier`, `randomize_visuals`
-  - settings dialog gained two new checkboxes
-  - both load paths now snapshot + run compat check
+- **块边界。** `iter_blocks` 从一条 Show/Hide 给到下一个，包含尾部空行和（属于下一个
+  块的）章节注释。`apply_style_to_block` 的插入点会跳过这两者。新增“尾部内容重写”
+  逻辑时必须复刻这个跳过。
+- **`POE2 Custom Sound Filter.exe`** 是旧的打包产物；`build_exe.bat` 重新打包，
+  构建号在 `version.txt`。
+- **颜色/形状集合** 在 `features/visual_emphasis.py`：`POE2_NAMED_COLORS`（11）、
+  `POE2_MINIMAP_SHAPES`（12）。GGG 新增时要同步更新这些常量**和**
+  `data/visual_presets.json` 加载器里的校验集合。
+- **档次判定关键词** `_SECTION_KEYWORDS` 是首个命中即返回的子串匹配，顺序敏感；
+  假设使用 NeverSink 的章节命名习惯。
+- **Windows 控制台打不出 Unicode 箭头**（cp1252）。测试里用 ASCII；应用本身没问题，
+  Tk 原生支持 Unicode。
+- **本机没装 `customtkinter`**，所以本仓库的历史改动大多只有 `py_compile` 级别的验证，
+  没有 GUI 冒烟测试。
 
----
+## 7. 后续工作（按大致的优先级）
 
-## 6. Architecture decisions worth knowing
+1. **`migration_rules.json` 的应用内规则编辑器**（现在只能从对话框打开文件）。
+2. **兼容性修复的冲突解决界面**：加个 before/after diff 视图。
+3. **多档次批量重分配**：“把所有含某 BaseType 的块移到顶级”这类查询式批处理。
+4. **预览模式与保存分离**：现在点应用就落盘，改成“只在保存时提交”的图层式实验。
+5. **导出/分享自定义**：把覆盖 + 视觉预设打成一个可导入的包。
+6. **档次详情对话框里的块级样式选择器**（`BlockOverride.style` 已经打通，只差界面）。
+7. **更聪明的价值启发式**：把现有字号、是否已有 `PlayEffect`/`MinimapIcon`、
+   堆叠数量阈值也纳入判定。
+8. **主编辑器里的实时预览**：把选中的样式画到表格行上。
+9. **自动化测试**：`block_signature` 稳定性、`apply_style_to_block` 插入边界、
+   `_compute_override_ranges`、迁移规则解析顺序。
 
-1. **Block signatures are stable, not positional.** They survive filter
-   re-imports, reorders, comment changes. They do NOT survive criteria
-   changes (Class/BaseType/Rarity edit) — which is the correct semantic:
-   that's a different block.
-
-2. **Forgiving JSON loaders everywhere.** Both `migration_rules.json` and
-   `visual_presets.json` survive bad fields — print a warning, drop the
-   bad entry, keep going. Never crash the load over a typo.
-
-3. **Lazy imports across modules to break cycles.** `EmphasisStyler.plan()`
-   imports `core.user_overrides.block_signature` lazily.
-   `FilterCompatibilityChecker._compute_override_ranges` imports
-   `features.visual_emphasis` lazily. Keep this pattern when adding cross-
-   module hooks.
-
-4. **Atomic writes via `os.replace`.** Every save goes through a `.tmp` +
-   replace dance. A crash mid-write cannot truncate the filter.
-
-5. **Backups don't block loading.** `_snapshot_on_load` swallows any
-   exception and reports via status bar only. Filter loads must never fail
-   because the backup folder is read-only.
-
-6. **Visual tools touch styling ONLY.** Show/Hide, item conditions, sound
-   commands are off-limits. This is a hard invariant — protect it. The
-   tradeoff was discussed and the user picked the conservative path.
-
-7. **Conflicts default to off, not on.** When a compatibility fix would
-   touch a user-overridden block, the dialog defaults to "don't apply" so
-   the user has to explicitly opt in to lose their customization.
-
----
-
-## 7. Known limitations / gotchas
-
-- **Block boundary detection.** `iter_blocks` yields lines from one
-  Show/Hide to the next, which includes trailing blanks AND any
-  `# [[NNNN]]` section header that belongs to the *next* block. Insertion
-  logic in `apply_style_to_block` skips back past both. If you add a new
-  trailing-content rewriter, replicate that skip.
-
-- **`POE2 Custom Sound Filter.exe`** at repo root is the previous build.
-  `build_exe.bat` rebuilds it (PyInstaller). Build number lives in a
-  separate file referenced in recent commits.
-
-- **POE2 named-color / shape sets** in `features/visual_emphasis.py`:
-  `POE2_NAMED_COLORS` (11) and `POE2_MINIMAP_SHAPES` (12). If GGG adds
-  new entries, update those constants AND `data/visual_presets.json`
-  loader's validators (`_VALID_NAMED_COLORS`, `_VALID_MINIMAP_SHAPES`).
-
-- **Tier classification keywords** in `_SECTION_KEYWORDS` are first-match-
-  wins substring. Order matters. NeverSink section names are the assumed
-  convention; other filter authors may need additional entries.
-
-- **The `auto_check_compatibility` toggle exists** but the seed
-  `migration_rules.json` ships with all examples disabled, so a clean filter
-  on first run will be silent. That's by design — the user adds rules as
-  needed.
-
-- **Windows console can't print Unicode arrows** (cp1252). Tests use ASCII;
-  the app itself is fine because Tk handles Unicode natively.
-
----
-
-## 8. Plausible next work
-
-Not yet built — listed in rough priority order:
-
-1. **In-app rule editor for `migration_rules.json`.** The user can already
-   open the file from the compatibility dialog, but a structured
-   editor would be friendlier. Same JSON pattern as visual_presets.
-
-2. **Conflict resolution UI for compatibility fixes.** Right now a
-   conflicting fix is just default-off. A "show me what would change
-   before/after" diff view would be nicer.
-
-3. **Multi-tier bulk reassign.** "Move all blocks containing this BaseType
-   to TOP" — a query-and-batch flow on top of the existing per-block UI.
-
-4. **Apply-on-save vs apply-on-load.** Currently emphasis/randomizer
-   rewrites the file when the user clicks Apply. A "preview mode" that
-   doesn't touch the file (keeps overrides as a layer, only commits on save)
-   would let users experiment more freely. The sidecar can already represent
-   this — the styler just needs a non-destructive plan-to-preview path.
-
-5. **Export/share customizations.** A "share my tier styling" button that
-   bundles overrides + visual_presets into a single file someone else can
-   import.
-
-6. **Block-level style picker in the tier detail dialog.** Currently you
-   can reassign a block's tier or use the tier preset, but to set a per-
-   block style override you have to edit the sidecar by hand. The
-   `BlockOverride.style` field is wired through everything; just needs UI.
-
-7. **Smarter value heuristics.** Currently classification reads Show/Hide,
-   `$tier->`, and section name. Could also weigh: existing font size,
-   presence of PlayEffect/MinimapIcon (filter author already considered it
-   important), StackSize thresholds.
-
-8. **Live preview in the main editor.** The tier detail dialog has a
-   preview. The main editor tree still shows category/sound/etc. — wiring
-   the chosen style into the row rendering would let the user see their
-   work without leaving the editor.
-
-9. **Unit tests.** `tests/` exists per CLAUDE.md but most of this
-   session's work has no tests. The most valuable to cover:
-   `block_signature` stability, `apply_style_to_block` insertion edge
-   cases, `_compute_override_ranges`, the migration rule resolution order.
-
----
-
-## 9. Quick verification commands
+## 8. 验证命令
 
 ```powershell
-# Compile everything
-python -m py_compile main.py core/*.py features/*.py ui/*.py
+# 全量编译
+python -m py_compile main.py core/*.py features/*.py ui/*.py economy_tier/*.py
 
-# Smoke-test the compatibility engine
+# 兼容性引擎冒烟
 python -c "from core.compatibility import FilterCompatibilityChecker, MigrationRulesEngine; print(len(MigrationRulesEngine().rules))"
 
-# Test visual emphasis on a sample
+# 视觉强化冒烟
 python -c "from features.visual_emphasis import EmphasisStyler, apply_changes; lines=['Show\n','\tRarity Unique\n']; print(apply_changes(lines, EmphasisStyler().plan(lines)))"
 
-# Test override round-trip (uses tempfile)
-python -c "from core.user_overrides import block_signature; print(block_signature(['Show\n','\tBaseType \"Heavy Belt\"\n','\tRarity Unique\n']))"
+# 中文映射往返
+python -c "from core.zh import mode_label, mode_value, conf_label, conf_value; assert mode_value(mode_label('Preview Only'))=='Preview Only'; assert conf_value(conf_label('high'))=='high'; print('ok')"
+
+# 跑测试（需先装 pytest）
+python -m pytest -q
 ```
 
+## 9. 协作偏好（`CLAUDE.md` 的浓缩版）
+
+- 用户不直接操作 git/GitHub。搭完一段工作就提交、推送、开或更新 PR，不用每次问。
+- 新工作一律走**特性分支**，绝不在 `main` 上直接改。
+- 破坏性操作（force-push、重写历史、删分支、合并 PR）先确认。
+- `gh` CLI 已安装并登录为 `panyanyu`；`origin` =
+  `https://github.com/panyanyu/poe2-filter-sound-studio`。
+- 提交身份：`pyy <704508940@qq.com>`（仓库级已设置）。
+- 推送若报 `CONNECT tunnel failed, response 502`，是沙箱代理的问题，改用
+  `git -c http.proxy=http://127.0.0.1:7897 push`。
+
 ---
 
-## 10. Working preferences (mirror of CLAUDE.md, condensed)
-
-- User does not use git/GitHub. Claude commits, pushes, opens PRs without
-  being asked, on a feature branch, never directly on `main`.
-- Pause before destructive operations (force-push, history rewrite, branch
-  delete, PR merge).
-- `gh` CLI auth as `panyanyu`. Remote `origin` =
-  `https://github.com/panyanyu/poe2-filter-sound-studio`.
-- Commit author: `pyy <704508940@qq.com>` (set repo-local).
-
----
-
-*End of context log. Last updated 2026-06-21 (Item Visibility tab — see Session log at top).*
+*上下文日志结束。最后更新：2026-10-22（界面中文化 + 中文字体 + 中文文档）。*

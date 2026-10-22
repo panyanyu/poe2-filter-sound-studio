@@ -68,7 +68,7 @@ class _TierStyleEditor:
         wrapper = ctk.CTkFrame(self.dlg, fg_color=self.pal.panel)
         wrapper.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(wrapper, text="编辑档次样式", font=("Segoe UI Semibold", 14)).pack(
+        ctk.CTkLabel(wrapper, text="编辑档次样式", font=("Microsoft YaHei UI", 14, "bold")).pack(
             anchor="w"
         )
         ctk.CTkLabel(
@@ -137,7 +137,7 @@ class _TierStyleEditor:
             "Preview",
         ]
         for col, text in enumerate(headers):
-            ctk.CTkLabel(frame, text=text, font=("Segoe UI Semibold", 10)).grid(
+            ctk.CTkLabel(frame, text=text, font=("Microsoft YaHei UI", 10, "bold")).grid(
                 row=0, column=col, padx=4, pady=(2, 6), sticky="w"
             )
 
@@ -145,7 +145,7 @@ class _TierStyleEditor:
         for r, tier in enumerate(TIER_ORDER, start=1):
             st = self.state[tier]
             w: dict = {}
-            ctk.CTkLabel(frame, text=tier, font=("Segoe UI Semibold", 10)).grid(
+            ctk.CTkLabel(frame, text=tier, font=("Microsoft YaHei UI", 10, "bold")).grid(
                 row=r, column=0, padx=4, pady=3, sticky="w"
             )
 
@@ -215,7 +215,7 @@ class _TierStyleEditor:
                 command=lambda _v, t=tier: self._on_change(t),
             ).pack(side="left", padx=1)
 
-            preview = tk.Label(frame, text=f" {tier} 档次物品 ", font=("Segoe UI", 10, "bold"))
+            preview = tk.Label(frame, text=f" {tier} 档次物品 ", font=("Microsoft YaHei UI", 10, "bold"))
             preview.grid(row=r, column=8, padx=6, pady=3, sticky="w")
             w["preview"] = preview
             self.widgets[tier] = w
@@ -273,7 +273,7 @@ class _TierStyleEditor:
             fg=_hex(st["text"]),
             highlightthickness=2,
             highlightbackground=_hex(st["border"]),
-            font=("Segoe UI", font_px, "bold"),
+            font=("Microsoft YaHei UI", font_px, "bold"),
         )
 
     # ---------------- save / delete ----------------

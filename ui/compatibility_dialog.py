@@ -83,7 +83,7 @@ class _CompatibilityDialog:
         ctk.CTkLabel(
             main,
             text=f"过滤器：{os.path.basename(app.filter_path) if app.filter_path else '（未保存）'}",
-            font=("Segoe UI Semibold", 13),
+            font=("Microsoft YaHei UI", 13, "bold"),
         ).pack(anchor="w")
 
         rules_label = report.rules_file or "(no rules file)"
@@ -107,7 +107,7 @@ class _CompatibilityDialog:
             + conflict_note
         )
         ctk.CTkLabel(main, text=summary_text,
-                     font=("Segoe UI Semibold", 12)).pack(anchor="w", pady=(0, 8))
+                     font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w", pady=(0, 8))
 
         # ----- Issue table -----
         tf = ctk.CTkFrame(main, fg_color=pal.panel_alt)

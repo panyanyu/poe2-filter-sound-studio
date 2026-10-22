@@ -76,7 +76,7 @@ class _VisualToolsDialog:
         ctk.CTkLabel(
             wrapper,
             text=f"过滤器：{os.path.basename(app.filter_path)}",
-            font=("Segoe UI Semibold", 13),
+            font=("Microsoft YaHei UI", 13, "bold"),
         ).pack(anchor="w")
         ctk.CTkLabel(
             wrapper,
@@ -172,7 +172,7 @@ class _VisualToolsDialog:
         preview_frame = ctk.CTkFrame(parent, fg_color=pal.panel_alt)
         preview_frame.pack(fill="x", pady=8)
         ctk.CTkLabel(preview_frame, text="档次预设",
-                     font=("Segoe UI Semibold", 11)).pack(anchor="w", padx=8, pady=(6, 2))
+                     font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w", padx=8, pady=(6, 2))
 
         self._em_swatch_row = ctk.CTkFrame(preview_frame, fg_color="transparent")
         self._em_swatch_row.pack(fill="x", padx=4, pady=(0, 6))
@@ -180,7 +180,7 @@ class _VisualToolsDialog:
 
         self._em_total_label = ctk.CTkLabel(
             parent, text="",
-            font=("Segoe UI Semibold", 11),
+            font=("Microsoft YaHei UI", 11, "bold"),
         )
         self._em_total_label.pack(anchor="w", pady=(6, 4))
         self._update_em_total_label()
@@ -250,15 +250,15 @@ class _VisualToolsDialog:
             label_text = _TIER_LABELS[tier] + (" ★" if customized else "")
             top_lbl = tk.Label(inner, text=label_text,
                                bg=bg, fg=swatch_color, cursor="hand2",
-                               font=("Segoe UI Semibold", 11))
+                               font=("Microsoft YaHei UI", 11, "bold"))
             top_lbl.pack(pady=(6, 0))
             mid_lbl = tk.Label(inner, text=f"{counts.get(tier, 0)} 个块",
                                bg=bg, fg=swatch_color, cursor="hand2",
-                               font=("Segoe UI", 9))
+                               font=("Microsoft YaHei UI", 9))
             mid_lbl.pack()
             hint_lbl = tk.Label(inner, text="点击可编辑",
                                 bg=bg, fg=swatch_color, cursor="hand2",
-                                font=("Segoe UI", 8))
+                                font=("Microsoft YaHei UI", 8))
             hint_lbl.pack(side="bottom", pady=(0, 4))
 
             # Clicking anywhere in the cell opens the tier detail dialog.
@@ -329,7 +329,7 @@ class _VisualToolsDialog:
         pal_frame = ctk.CTkFrame(parent, fg_color=pal.panel_alt)
         pal_frame.pack(fill="x", pady=8)
         self._rand_pal_header = ctk.CTkLabel(
-            pal_frame, text="", font=("Segoe UI Semibold", 11))
+            pal_frame, text="", font=("Microsoft YaHei UI", 11, "bold"))
         self._rand_pal_header.pack(anchor="w", padx=8, pady=(6, 2))
         self._rand_swatch_row = ctk.CTkFrame(pal_frame, fg_color="transparent")
         self._rand_swatch_row.pack(fill="x", padx=4, pady=(0, 6))
@@ -401,7 +401,7 @@ class _VisualToolsDialog:
             inner.pack(fill="both", expand=True, padx=2, pady=2)
             tk.Label(inner, text="ITEM",
                      bg=_rgba_to_hex(p.bg), fg=_rgba_to_hex(p.text),
-                     font=("Segoe UI Semibold", 10)).pack(expand=True)
+                     font=("Microsoft YaHei UI", 10, "bold")).pack(expand=True)
 
     def _apply_random(self):
         if not self._rand_plan:

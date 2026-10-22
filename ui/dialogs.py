@@ -57,7 +57,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Color preview
-        preview_label = ctk.CTkLabel(main_frame, text="预览", font=("Arial", 12, "bold"))
+        preview_label = ctk.CTkLabel(main_frame, text="预览", font=("Microsoft YaHei UI", 12, "bold"))
         preview_label.pack(pady=(0, 5))
 
         self.preview_frame = ctk.CTkFrame(main_frame, width=400, height=80, corner_radius=8)
@@ -67,7 +67,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         self.preview_text = ctk.CTkLabel(
             self.preview_frame,
             text="示例物品名称",
-            font=("Arial", 16, "bold")
+            font=("Microsoft YaHei UI", 16, "bold")
         )
         self.preview_text.place(relx=0.5, rely=0.5, anchor="center")
 
@@ -239,7 +239,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         title_label = ctk.CTkLabel(
             main_frame,
             text="流放2 物品预览",
-            font=("Arial", 16, "bold")
+            font=("Microsoft YaHei UI", 16, "bold")
         )
         title_label.pack(pady=(0, 10))
 
@@ -247,7 +247,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         desc_label = ctk.CTkLabel(
             main_frame,
             text="这是该物品在游戏内使用当前颜色后的效果：",
-            font=("Arial", 11)
+            font=("Microsoft YaHei UI", 11)
         )
         desc_label.pack(pady=(0, 20))
 
@@ -310,7 +310,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         item_label = ctk.CTkLabel(
             item_frame,
             text=item_name,
-            font=("Arial", 18, "bold"),
+            font=("Microsoft YaHei UI", 18, "bold"),
             text_color=text_hex
         )
         item_label.place(relx=0.5, rely=0.5, anchor="center")
@@ -368,7 +368,7 @@ class ConfirmDialog(ctk.CTkToplevel):
         message_label = ctk.CTkLabel(
             main_frame,
             text=message,
-            font=("Arial", 12),
+            font=("Microsoft YaHei UI", 12),
             wraplength=350,
             justify="center"
         )

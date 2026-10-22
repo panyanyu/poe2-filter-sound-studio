@@ -41,6 +41,7 @@ from core.compatibility import (
 from ui.compatibility_dialog import show_compatibility_dialog
 from ui.visual_tools_dialog import open_visual_tools
 from core.app_logging import init_logging, get_logger, get_log_path, shutdown as logging_shutdown
+from core.fonts import install_default_fonts
 from core.zh import (
     appearance_label, appearance_value, palette_label, palette_value,
     mode_label, mode_value, rarity_label, sound_type_label, visibility_label,
@@ -262,6 +263,14 @@ class FilterSoundEditor:
     def __init__(self, root):
         self.root = root
 
+        # ---------- 中文字体 ----------
+        # 菜单、消息框、Treeview 行/表头用的是 tkinter 命名字体，默认是西文
+        # 字体族；统一改成微软雅黑，避免中文逐字回退导致的字号/行高不齐。
+        try:
+            install_default_fonts(root)
+        except Exception:
+            pass
+
         # ---------- Settings + theme ----------
         self.settings: AppSettings = load_settings()
         self.theme_manager = ThemeManager()
@@ -341,11 +350,11 @@ class FilterSoundEditor:
         header.pack(fill="x", padx=6, pady=(6, 10))
 
         title = ctk.CTkLabel(header, text=APP_NAME,
-                             font=("Segoe UI Semibold", 20))
+                             font=("Microsoft YaHei UI", 20, "bold"))
         title.pack(side="left", padx=(12, 8), pady=8)
 
         self.file_label = ctk.CTkLabel(header, text="未加载文件",
-                                       font=("Segoe UI", 12))
+                                       font=("Microsoft YaHei UI", 12))
         self.file_label.pack(side="left", padx=6, pady=8)
 
         # Top controls — grouped into labeled clusters separated by thin dividers
@@ -358,7 +367,7 @@ class FilterSoundEditor:
 
         def _cluster(label_text):
             c = ctk.CTkFrame(top_controls, fg_color="transparent")
-            ctk.CTkLabel(c, text=label_text, font=("Segoe UI Semibold", 10),
+            ctk.CTkLabel(c, text=label_text, font=("Microsoft YaHei UI", 10, "bold"),
                          text_color=("gray45", "gray60")).pack(side="left", padx=(8, 6))
             return c
 
@@ -434,8 +443,8 @@ class FilterSoundEditor:
 
         sidebar_header = ctk.CTkFrame(sidebar, corner_radius=0, fg_color="transparent")
         sidebar_header.pack(fill="x", padx=4, pady=(4, 0))
-        ctk.CTkLabel(sidebar_header, text="分类", font=("Segoe UI Semibold", 13)).pack(side="left", padx=6, pady=4)
-        self.sidebar_count_label = ctk.CTkLabel(sidebar_header, text="", font=("Segoe UI", 10))
+        ctk.CTkLabel(sidebar_header, text="分类", font=("Microsoft YaHei UI", 13, "bold")).pack(side="left", padx=6, pady=4)
+        self.sidebar_count_label = ctk.CTkLabel(sidebar_header, text="", font=("Microsoft YaHei UI", 10))
         self.sidebar_count_label.pack(side="right", padx=6, pady=4)
 
         cat_tree_container = ctk.CTkFrame(sidebar, corner_radius=8, fg_color="transparent")
@@ -461,7 +470,7 @@ class FilterSoundEditor:
         # Sidebar tree tag colors get overridden by ThemeManager too, but seed defaults
         # so the widget paints something while waiting for the first apply().
         self.cat_tree.tag_configure("group_header", background="#3a3a3a",
-                                    foreground="#ffe49a", font=("Segoe UI", 10, "bold"))
+                                    foreground="#ffe49a", font=("Microsoft YaHei UI", 10, "bold"))
         self.cat_tree.tag_configure("smart", foreground="#a4d4ff")
         self.cat_tree.tag_configure("muted", foreground="#888888")
 
@@ -562,12 +571,12 @@ class FilterSoundEditor:
             hint_banner,
             text=("💡  Right-click any item for per-item actions  ·  "
                   "Ctrl+A select all  ·  Ctrl+click multi-select"),
-            font=("Segoe UI", 10),
+            font=("Microsoft YaHei UI", 10),
             anchor="w",
         )
         self.hint_label.pack(side="left", padx=8, pady=4)
         self.selection_counter = ctk.CTkLabel(
-            hint_banner, text="", font=("Segoe UI Semibold", 10), anchor="e",
+            hint_banner, text="", font=("Microsoft YaHei UI", 10, "bold"), anchor="e",
         )
         self.selection_counter.pack(side="right", padx=8, pady=4)
         self.tree.bind("<<TreeviewSelect>>", self._on_tree_select_with_count, add="+")
@@ -577,7 +586,7 @@ class FilterSoundEditor:
         preview_bar = FlowBar(tab_edit, corner_radius=12)
         preview_bar.pack(fill="x", padx=6, pady=(4, 2))
         preview_bar.add(ctk.CTkLabel(preview_bar, text="🔊 试听",
-                                      font=("Segoe UI Semibold", 11)))
+                                      font=("Microsoft YaHei UI", 11, "bold")))
         self.preview_selected_button = ctk.CTkButton(
             preview_bar, text="▶ 试听选中",
             command=self.preview_selected, width=140,
@@ -606,7 +615,7 @@ class FilterSoundEditor:
         bulk_options.pack(fill="x", padx=6, pady=2)
         bulk_options.add(ctk.CTkLabel(
             bulk_options, text="🗂 对可见行批量",
-            font=("Segoe UI Semibold", 11),
+            font=("Microsoft YaHei UI", 11, "bold"),
         ))
         self.bulk_replace_filtered_btn = ctk.CTkButton(
             bulk_options, text="🔁 音效",
@@ -630,7 +639,7 @@ class FilterSoundEditor:
         # Health cluster — visually separated by a label.
         bulk_options.add(ctk.CTkLabel(
             bulk_options, text="    🩺 健康检查",
-            font=("Segoe UI Semibold", 11),
+            font=("Microsoft YaHei UI", 11, "bold"),
         ))
         self.verify_sounds_btn = ctk.CTkButton(
             bulk_options, text="校验并修复",
@@ -650,7 +659,7 @@ class FilterSoundEditor:
         color_options.pack(fill="x", padx=6, pady=(2, 6))
         color_options.add(ctk.CTkLabel(
             color_options, text="🎨 选中物品",
-            font=("Segoe UI Semibold", 11),
+            font=("Microsoft YaHei UI", 11, "bold"),
         ))
         self.edit_colors_button = ctk.CTkButton(
             color_options, text="🎨 编辑颜色…", command=self.edit_colors, width=140,
@@ -701,7 +710,7 @@ class FilterSoundEditor:
             width=220,
             height=24,
             corner_radius=12,
-            font=("Segoe UI", 10, "bold"),
+            font=("Microsoft YaHei UI", 10, "bold"),
             fg_color="#3a3a3a",
             hover_color="#4a4a4a",
             text_color="#cccccc",
@@ -3045,7 +3054,7 @@ class FilterSoundEditor:
         frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         ctk.CTkLabel(frame, text="选择要编辑的颜色：",
-                     font=("Segoe UI Semibold", 14)).pack(pady=(0, 15))
+                     font=("Microsoft YaHei UI", 14, "bold")).pack(pady=(0, 15))
 
         # Get current colors
         current_colors = ColorManager.get_colors(block)
@@ -3524,7 +3533,7 @@ class FilterSoundEditor:
         frame.pack(fill="both", expand=True, padx=16, pady=16)
 
         # --- Theme group ---
-        ctk.CTkLabel(frame, text="外观", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(4, 2))
+        ctk.CTkLabel(frame, text="外观", font=("Microsoft YaHei UI", 13, "bold")).pack(anchor="w", pady=(4, 2))
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
         ctk.CTkLabel(row, text="配色主题：").pack(side="left", padx=(0, 8))
         theme_var = ctk.StringVar(value=palette_label(self.settings.theme_palette))
@@ -3538,7 +3547,7 @@ class FilterSoundEditor:
                           variable=mode_var, width=140).pack(side="left")
 
         # --- Audio group ---
-        ctk.CTkLabel(frame, text="音频", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
+        ctk.CTkLabel(frame, text="音频", font=("Microsoft YaHei UI", 13, "bold")).pack(anchor="w", pady=(16, 2))
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
         ctk.CTkLabel(row, text="FFmpeg 路径（可选）：").pack(side="left", padx=(0, 8))
         ffmpeg_var = ctk.StringVar(value=self.settings.ffmpeg_path)
@@ -3555,7 +3564,7 @@ class FilterSoundEditor:
 
         detect_label = ctk.CTkLabel(frame,
             text=f"当前检测到：{self.ffmpeg_path or '（未找到 —— 试听仍会尝试 VLC/pygame/winsound）'}",
-            font=("Segoe UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
+            font=("Microsoft YaHei UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
         )
         detect_label.pack(anchor="w", pady=(2, 4))
 
@@ -3566,7 +3575,7 @@ class FilterSoundEditor:
         ctk.CTkLabel(row, text="(0-300)", text_color=pal.text_muted).pack(side="left", padx=(6, 0))
 
         # --- File handling group ---
-        ctk.CTkLabel(frame, text="文件处理", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
+        ctk.CTkLabel(frame, text="文件处理", font=("Microsoft YaHei UI", 13, "bold")).pack(anchor="w", pady=(16, 2))
         autoload_var = ctk.BooleanVar(value=self.settings.autoload_last)
         ctk.CTkCheckBox(frame, text="启动时重新打开上次的过滤器", variable=autoload_var).pack(anchor="w", pady=2)
         backup_var = ctk.BooleanVar(value=self.settings.create_backups)
@@ -3585,7 +3594,7 @@ class FilterSoundEditor:
         ctk.CTkLabel(row, text="份备份/每个过滤器（更早的会被删除）。").pack(side="left", padx=(6, 0))
 
         # --- Filter health group ---
-        ctk.CTkLabel(frame, text="过滤器健康", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
+        ctk.CTkLabel(frame, text="过滤器健康", font=("Microsoft YaHei UI", 13, "bold")).pack(anchor="w", pady=(16, 2))
         verify_var = ctk.BooleanVar(value=self.settings.verify_on_save)
         ctk.CTkCheckBox(
             frame,
@@ -3595,7 +3604,7 @@ class FilterSoundEditor:
         ctk.CTkLabel(
             frame,
             text="底部状态栏在音效齐全时显示 ✓，有音效引用缺失时显示 ⚠ 标签。点该标签、按 Ctrl+H，或用「音效 → 校验并修复音效…」来修复。",
-            font=("Segoe UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
+            font=("Microsoft YaHei UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
         ).pack(anchor="w", pady=(0, 4))
 
         compat_var = ctk.BooleanVar(value=self.settings.auto_check_compatibility)
@@ -3607,12 +3616,12 @@ class FilterSoundEditor:
         ctk.CTkLabel(
             frame,
             text="加载的过滤器里如果有无法识别的指令，或命中 data/migration_rules.json 里某条规则，会弹窗提示自动修复。关闭该项后只能通过「过滤器健康 → 检查过滤器兼容性…」手动执行。",
-            font=("Segoe UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
+            font=("Microsoft YaHei UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
         ).pack(anchor="w", pady=(0, 4))
 
         # --- Footer: settings file location + buttons ---
         ctk.CTkLabel(frame, text=f"设置文件：{settings_path()}",
-                     font=("Segoe UI", 9), text_color=pal.text_muted).pack(anchor="w", pady=(16, 4))
+                     font=("Microsoft YaHei UI", 9), text_color=pal.text_muted).pack(anchor="w", pady=(16, 4))
 
         btn_row = ctk.CTkFrame(frame, fg_color="transparent"); btn_row.pack(fill="x", pady=(8, 0))
         def _save_and_close():
@@ -3707,14 +3716,14 @@ class FilterSoundEditor:
         f = ctk.CTkFrame(dlg, fg_color=pal.panel)
         f.pack(fill="both", expand=True, padx=16, pady=16)
 
-        ctk.CTkLabel(f, text="使用说明", font=("Segoe UI Semibold", 18)).pack(anchor="w")
+        ctk.CTkLabel(f, text="使用说明", font=("Microsoft YaHei UI", 18, "bold")).pack(anchor="w")
         ctk.CTkLabel(
             f, text="快速了解本工具各部分的作用。",
             text_color=pal.text_muted,
         ).pack(anchor="w", pady=(0, 8))
 
         box = ctk.CTkTextbox(f, wrap="word", width=660, height=440,
-                             font=("Segoe UI", 12))
+                             font=("Microsoft YaHei UI", 12))
         box.pack(fill="both", expand=True)
         box.insert("1.0", self.HOW_TO_USE_TEXT)
         box.configure(state="disabled")
@@ -3735,7 +3744,7 @@ class FilterSoundEditor:
         pal = self.theme_manager.current()
         f = ctk.CTkFrame(dlg, fg_color=pal.panel); f.pack(fill="both", expand=True, padx=16, pady=16)
 
-        ctk.CTkLabel(f, text=APP_NAME, font=("Segoe UI Semibold", 18)).pack(anchor="w")
+        ctk.CTkLabel(f, text=APP_NAME, font=("Microsoft YaHei UI", 18, "bold")).pack(anchor="w")
         ctk.CTkLabel(f, text=f"版本 {APP_VERSION}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
         ctk.CTkLabel(f, text=APP_TAGLINE, text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
         ctk.CTkLabel(f,
@@ -3744,7 +3753,7 @@ class FilterSoundEditor:
                  "按章节分类，并可对当前可见的所有规则块批量操作。",
             justify="left", wraplength=520).pack(anchor="w", pady=4)
 
-        ctk.CTkLabel(f, text="已检测到的音频后端：", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(12, 2))
+        ctk.CTkLabel(f, text="已检测到的音频后端：", font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w", pady=(12, 2))
         backends = [
             ("FFmpeg", bool(self.ffmpeg_path)),
             ("ffplay", bool(self.ffplay_path)),
@@ -3759,7 +3768,7 @@ class FilterSoundEditor:
             color = pal.smart_fg if ok else pal.text_muted
             ctk.CTkLabel(f, text=f"  {mark}  {name}", text_color=color).pack(anchor="w")
 
-        ctk.CTkLabel(f, text="设置文件位置：", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(12, 2))
+        ctk.CTkLabel(f, text="设置文件位置：", font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w", pady=(12, 2))
         ctk.CTkLabel(f, text=settings_path(), text_color=pal.text_muted, wraplength=480, justify="left").pack(anchor="w")
 
         link_row = ctk.CTkFrame(f, fg_color="transparent"); link_row.pack(fill="x", pady=(12, 0))
@@ -3810,7 +3819,7 @@ class FilterSoundEditor:
 
         summary = (f"{len(referenced)} referenced  •  {len(present)} present on disk  "
                    f"•  {len(missing)} missing  •  {len(orphan)} orphan (not referenced)")
-        ctk.CTkLabel(f, text=summary, font=("Segoe UI Semibold", 12)).pack(anchor="w", pady=(0, 8))
+        ctk.CTkLabel(f, text=summary, font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w", pady=(0, 8))
 
         # Tabs: Missing / Orphan / Referenced
         tabs = ctk.CTkTabview(f); tabs.pack(fill="both", expand=True)
@@ -3823,7 +3832,7 @@ class FilterSoundEditor:
             list_frame.pack(fill="both", expand=True, padx=4, pady=4)
             lb = tk.Listbox(list_frame, bg=pal.tree_bg, fg=pal.tree_fg,
                             selectbackground=pal.tree_sel_bg, selectforeground=pal.tree_sel_fg,
-                            font=("Segoe UI", 10), activestyle="none")
+                            font=("Microsoft YaHei UI", 10), activestyle="none")
             sb = ttk.Scrollbar(list_frame, orient="vertical", command=lb.yview)
             lb.configure(yscrollcommand=sb.set)
             lb.pack(side="left", fill="both", expand=True)
@@ -4029,7 +4038,7 @@ class FilterSoundEditor:
         ctk.CTkLabel(
             main,
             text=f"过滤器：{os.path.basename(self.filter_path)}",
-            font=("Segoe UI Semibold", 13),
+            font=("Microsoft YaHei UI", 13, "bold"),
         ).pack(anchor="w")
         ctk.CTkLabel(main, text=f"目录：{folder}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
 
@@ -4039,13 +4048,13 @@ class FilterSoundEditor:
             f"📦 Orphan files: {len(orphan)}   "
             f"🎲 Substitute pool: {len(pool)} sound(s)"
         )
-        ctk.CTkLabel(main, text=summary, font=("Segoe UI Semibold", 12)).pack(anchor="w", pady=(0, 8))
+        ctk.CTkLabel(main, text=summary, font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w", pady=(0, 8))
 
         # ----- Missing -> Substitute table -----
         if missing:
             ctk.CTkLabel(
                 main, text="缺失的引用 → 计划替换为",
-                font=("Segoe UI Semibold", 11),
+                font=("Microsoft YaHei UI", 11, "bold"),
             ).pack(anchor="w", pady=(8, 2))
 
             mf = ctk.CTkFrame(main, fg_color=pal.panel_alt)
@@ -4097,12 +4106,12 @@ class FilterSoundEditor:
             ctk.CTkLabel(
                 main,
                 text=f"孤立音效文件 → 将被移动到“{self.OLD_SOUNDS_FOLDER}/”",
-                font=("Segoe UI Semibold", 11),
+                font=("Microsoft YaHei UI", 11, "bold"),
             ).pack(anchor="w", pady=(12, 2))
             of = ctk.CTkFrame(main, fg_color=pal.panel_alt)
             of.pack(fill="both", expand=True, pady=4)
             orphan_lb = tk.Listbox(
-                of, height=6, font=("Segoe UI", 10),
+                of, height=6, font=("Microsoft YaHei UI", 10),
                 bg=pal.tree_bg, fg=pal.tree_fg,
                 selectbackground=pal.tree_sel_bg, selectforeground=pal.tree_sel_fg,
                 activestyle="none",
@@ -4175,7 +4184,7 @@ class FilterSoundEditor:
 
         frame = ctk.CTkFrame(picker, fg_color=pal.panel_alt)
         frame.pack(fill="both", expand=True, padx=12, pady=4)
-        lb = tk.Listbox(frame, font=("Segoe UI", 10),
+        lb = tk.Listbox(frame, font=("Microsoft YaHei UI", 10),
                         bg=pal.tree_bg, fg=pal.tree_fg,
                         selectbackground=pal.tree_sel_bg, selectforeground=pal.tree_sel_fg,
                         activestyle="none")
@@ -4344,7 +4353,7 @@ class FilterSoundEditor:
 
         # ----- Header -----
         ctk.CTkLabel(main, text="音效去重",
-                     font=("Segoe UI Semibold", 16)).pack(anchor="w")
+                     font=("Microsoft YaHei UI", 16, "bold")).pack(anchor="w")
         ctk.CTkLabel(
             main,
             text="对当前可见的自定义警报音效规则重新分配音效"
@@ -4359,7 +4368,7 @@ class FilterSoundEditor:
             box = ctk.CTkFrame(parent, fg_color="transparent")
             box.pack(side="left", padx=16, pady=8)
             ctk.CTkLabel(box, text=str(big),
-                         font=("Segoe UI Semibold", 18),
+                         font=("Microsoft YaHei UI", 18, "bold"),
                          text_color=color or pal.text).pack(anchor="w")
             ctk.CTkLabel(box, text=label, text_color=pal.text_muted).pack(anchor="w")
         stat(stats, block_count, "blocks in working set")
@@ -4378,7 +4387,7 @@ class FilterSoundEditor:
             ctk.CTkLabel(
                 main,
                 text=f"当前存在重复（{len(dup_items)} 个文件被用了不止一次）：",
-                font=("Segoe UI Semibold", 11),
+                font=("Microsoft YaHei UI", 11, "bold"),
             ).pack(anchor="w", pady=(4, 2))
             dup_frame = ctk.CTkFrame(main, fg_color=pal.panel_alt)
             dup_frame.pack(fill="x", pady=(0, 6))
@@ -4392,7 +4401,7 @@ class FilterSoundEditor:
             ctk.CTkLabel(
                 main,
                 text="✓ 当前工作集里已经没有重复音效。",
-                font=("Segoe UI Semibold", 12), text_color=pal.smart_fg,
+                font=("Microsoft YaHei UI", 12, "bold"), text_color=pal.smart_fg,
             ).pack(anchor="w", pady=(4, 4))
 
         # ----- Shortfall warning + add-files prompt -----
@@ -4402,7 +4411,7 @@ class FilterSoundEditor:
             ctk.CTkLabel(
                 warn,
                 text="⚠ 音效文件数量不够，无法让每个块都用不同音效。",
-                font=("Segoe UI Semibold", 11), text_color="#ffffff",
+                font=("Microsoft YaHei UI", 11, "bold"), text_color="#ffffff",
             ).pack(anchor="w", padx=10, pady=(8, 2))
             ctk.CTkLabel(
                 warn,
@@ -4426,7 +4435,7 @@ class FilterSoundEditor:
         strategy_var = ctk.StringVar(value="unique" if can_all_unique else "balanced")
         sframe = ctk.CTkFrame(main, fg_color="transparent")
         sframe.pack(fill="x", pady=(8, 4))
-        ctk.CTkLabel(sframe, text="策略：", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        ctk.CTkLabel(sframe, text="策略：", font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
         ctk.CTkRadioButton(
             sframe,
             text=f"每个块都不同（1:1 分配）—— 需要 {block_count} 个音效，"
@@ -4577,7 +4586,7 @@ class FilterSoundEditor:
 
         def line(text, bold=False, muted=False):
             ctk.CTkLabel(f, text=text,
-                         font=("Segoe UI Semibold", 12) if bold else ("Segoe UI", 11),
+                         font=("Microsoft YaHei UI", 12, "bold") if bold else ("Microsoft YaHei UI", 11),
                          text_color=pal.text_muted if muted else pal.text,
                          justify="left", anchor="w").pack(anchor="w", pady=1, fill="x")
 

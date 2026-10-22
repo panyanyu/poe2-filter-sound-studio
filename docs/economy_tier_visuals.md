@@ -1,163 +1,134 @@
-# Economy Tier Visual Preset
+# 经济档次视觉预设
 
-Instantly restyle a Path of Exile 2 `.filter` by **economy value tier**. The
-feature scans every `Show`/`Hide` block, classifies the items it matches into a
-value tier (SS → F, plus the special `SS_CHANCE_BASE`), and applies one
-consistent visual style per tier across **all** item categories — an S-tier
-currency and an S-tier weapon base end up looking the same.
+按**经济价值档次**一句话重排《流放之路 2》的 `.filter`。这个功能会扫描每个
+`Show`/`Hide` 规则块，把它匹配到的物品归入一个价值档次（SS → F，另有特殊的
+`SS_CHANCE_BASE`），然后对每个档次在**所有**物品分类上套同一套观感 —— S 档的通货
+和 S 档的武器基底看起来会一致。
 
-It is purely additive: it never changes how your filter *matches* items, only how
-matched items *look*.
+它是纯增量的：只改“匹配到的物品长什么样”，完全不动“匹配什么”。
 
-## What it does
+## 它做什么
 
-- **Uniform tier visuals.** Each tier gets one text/background/border colour,
-  font size, `PlayEffect`, and `MinimapIcon` from the active template.
-- **Five modes** (dropdown in the main window, or **Visuals & Tiers → Economy Tier
-  Visuals…**):
-  1. `Off` (default — does nothing)
-  2. `Preview Only` — shows the diff; **never writes to disk, never makes a backup**
-  3. `Apply Economy Tier Visuals`
-  4. `Apply Economy Tier Visuals Plus Chance Base Boost`
-  5. `Restore Previous Visuals`
-- **Chance Base Boost.** Promotes `Rarity Normal` blocks whose `BaseType`
-  *exactly* matches a known high-value chancing base (e.g. Sapphire Ring →
-  Dream Fragments) to `SS_CHANCE_BASE`. It never promotes Magic/Rare versions and
-  never substring-matches a short token like `"Ring"`.
-- **Preview before save.** Every apply shows blocks scanned / changed / unchanged
-  / skipped, per-tier counts, chance promotions, warnings, and a run fingerprint.
-- **Backups.** Before any write, a verified copy is saved to
-  `backups/<filter>_before_economy_tier_visuals_<timestamp>.filter`. If the
-  backup can't be made or verified, nothing is written.
-- **Restore.** `Restore Previous Visuals` reverts the last economy-tier
-  operation on the current file. The restore itself is backed up and recorded, so
-  it is also undoable.
-- **Transfer toggles.** Turn off any of text/background/border/font/PlayEffect/
-  MinimapIcon. *Preserve existing sounds* and *Create backup before save* are
-  locked on.
+- **统一档次视觉。** 每个档次从当前模板里取一套文字色 / 背景色 / 边框色、字号、
+  `PlayEffect` 和 `MinimapIcon`。
+- **五种模式**（主窗口下拉框，或 `视觉与档次 → 经济档次视觉…`）：
+  1. `关闭`（默认 —— 什么都不做）
+  2. `仅预览` —— 只显示差异，**不写盘、不建备份**
+  3. `应用经济档次视觉`
+  4. `应用经济档次视觉＋机会石基底提升`
+  5. `恢复上一次视觉`
+- **机会石基底提升。** 把 `Rarity Normal` 且 `BaseType` **精确**命中已知高价值
+  机会石基底（例如 蓝宝石戒指 → 梦呓残片）的块提升到 `SS_CHANCE_BASE`。绝不会把
+  魔法/稀有版本一起提升，也绝不对 `"Ring"` 这种短词做子串匹配。
+- **保存前预览。** 每次应用都会列出扫描数 / 改动数 / 未改动数 / 跳过数、各档次分布、
+  机会石提升项、警告，以及本次运行指纹。
+- **备份。** 写入前先把一份已校验的副本存到
+  `backups/<过滤器名>_before_economy_tier_visuals_<时间戳>.filter`。备份失败或校验
+  不过，就一个字都不写。
+- **恢复。** `恢复上一次视觉` 会回退当前文件上的最后一次经济档次操作。恢复动作本身
+  也会备份并记录，所以它也还能再撤销。
+- **迁移开关。** 文字/背景/边框/字体/PlayEffect/MinimapIcon 都可以单独关掉。
+  *保留原有音效* 和 *保存前创建备份* 是锁定开启的。
 
-## What it does NOT do — sound preservation
+## 它不做什么 —— 音效保护
 
-**Sound directives are never touched.** `PlayAlertSound`,
-`PlayAlertSoundPositional`, `CustomAlertSound`, `CustomAlertSoundOptional`, and
-`DisableDropSound` are left byte-for-byte identical, in the same count. A
-structural-diff guard runs before every save and **aborts** if any non-visual
-line (a sound line, a condition, a comment, block order) would change. Templates
-physically cannot contain sound directives.
+**音效指令完全不动。** `PlayAlertSound`、`PlayAlertSoundPositional`、
+`CustomAlertSound`、`CustomAlertSoundOptional`、`DisableDropSound` 逐字节保持一致，
+数量也不变。每次保存前都会跑结构差异守卫，只要有任何非视觉行（音效行、条件、注释、
+块顺序）会变，就**直接中止**。模板从结构上就不允许包含音效指令。
 
-It also does not: delete comments, reorder blocks, drop unknown directives,
-re-flow formatting, change line endings, or regenerate the file. Blocks it
-doesn't restyle are preserved byte-for-byte. By default it will not restyle
-`Hide` blocks, pure sound-only rules, or blocks it can't confidently classify
-(see *confidence*).
+它同样不会：删注释、重排块、丢弃未知指令、重排格式、改换行符、整份重新生成。
+没有重排视觉的块逐字节保留。默认情况下它不会改动 `Hide` 块、纯音效规则，以及判定
+把握不足的块（见下节）。
 
-## Confidence gating
+## 置信度门槛
 
-Each classification has a confidence (`low` / `medium` / `high`). The
-**Minimum confidence to apply** selector (default `medium`) controls what gets
-written:
+每个判定都有一个置信度（`low` / `medium` / `high`）。**最低置信度**选择器
+（默认 `medium`）决定哪些结果会被真正写入：
 
-- `high` — only confident economy-data matches (named currency/uniques/rules).
-- `medium` (default) — the above **plus the filter's own grading** (`$tier` tags
-  and recognised sections), so rare/magic/normal gear your filter grades is
-  tiered too.
-- `low` — also includes the weakest guesses (e.g. generic gems).
+- `high` —— 只写经济数据明确命中的（有名字的通货/传奇/规则）。
+- `medium`（默认）—— 在上面基础上**加上过滤器自身的评级**（`$tier` 标签和可识别
+  的章节），所以过滤器已经评过级的稀有/魔法/普通装备也会被分档。
+- `low` —— 再包含最弱的猜测（例如普通技能宝石）。
 
-Everything is always shown in the Preview regardless of the threshold; the
-threshold only controls what gets written.
+不论门槛设成什么，预览里始终显示全部结果；门槛只影响“写不写”。
 
-## How tiers are decided (priority order)
+## 档次是怎么判定的（优先级从高到低）
 
-1. Exact `BaseType` chance-base hit (chance-boost mode, `Rarity Normal` only)
-2. Exact item/currency/base **name** match against the tier lists
+1. `BaseType` 精确命中机会石基底（仅机会石提升模式，且仅 `Rarity Normal`）
+2. 物品/通货/基底的**名称**精确命中档次清单
 3. `Rarity Unique` → A
-4. `WaystoneTier` numeric rule (≥15 → A, 11–14 → B, 6–10 → C, <6 → D)
-5. Unmatched `Class "Currency"` → C (never lower without an explicit entry)
-6. Gem class → C
-7. **The filter's own grading** — a block's explicit `$tier->` tag or recognised
-   section name (medium confidence, applied by default). This is how rare/magic/
-   normal **weapons and armour** get tiered: they have no fixed market value, so
-   the app trusts the grade your filter already assigns them.
-8. Otherwise *unknown* → left unchanged (no grade to use)
+4. `WaystoneTier` 数值规则（≥15 → A，11–14 → B，6–10 → C，<6 → D）
+5. 未命中的 `Class "Currency"` → C（没有显式条目时不会再往下压）
+6. 技能宝石类 → C
+7. **过滤器自身的评级** —— 块里显式的 `$tier->` 标签，或可识别的章节名
+   （中等置信度，默认生效）。稀有/魔法/普通的**武器和护甲**就是靠这一步分档的：
+   它们没有固定市价，所以程序信任你过滤器里已有的评级。
+8. 其余 *未知* → 保持原样（没有可用的评级）
 
-When a block matches several items, the **highest** tier wins.
+一个块同时命中多个物品时，取**最高**档次。
 
-### Why some gear isn't tiered
+### 为什么有些装备没被分档
 
-Rare and magic weapons/armour are worth money based on their *random stats*, not
-their base — so they aren't in the value lists. The app tiers them only when your
-filter already grades them (step 7). If a block has no `$tier->` tag and isn't in
-a recognised section, it's left unchanged rather than guessing. Uniques, by
-contrast, get tier A automatically (step 3).
+稀有和魔法武器/护甲的价值取决于**随机词缀**而不是基底，所以它们不在价值清单里。
+只有当过滤器已经给它们评过级时（第 7 步），程序才会分档。既没有 `$tier->` 标签、
+也不在可识别章节里的块会被原样保留，而不是瞎猜。相对的，传奇会自动拿到 A 档（第 3 步）。
 
-## Idempotency
+## 幂等性
 
-Restyled blocks are stamped with a sentinel comment, e.g.
-`# [ETVP tier=S template="High Contrast Economy Tiers" v=1]`. Re-applying the
-same preset is a no-op (0 blocks changed) — directives are never stacked or
-duplicated.
+重排过视觉的块会打上一条哨兵注释，例如
+`# [ETVP tier=S template="High Contrast Economy Tiers" v=1]`。重复应用同一套预设是
+无操作（0 个块改动）—— 指令不会被叠加或重复写入。
 
-## Updating the economy data
+## 更新经济数据
 
-Economy values drift constantly — **treat the shipped tiers as a starting point
-and re-verify before relying on them.** The data lives in
-`data/economy_tiers/poe2_0_5_tiers.json` (schema-validated on load; if it's older
-than 14 days the UI shows a non-blocking staleness warning).
+经济价值一直在漂 —— **把内置档次当作起点，用之前自己再核对一遍。** 数据在
+`data/economy_tiers/poe2_0_5_tiers.json`（加载时做 schema 校验；如果数据超过 14 天，
+界面会显示一条不阻断操作的过期提醒）。
 
-The runtime is fully offline. To refresh, a maintainer runs the separate tool
-(not part of the packaged app):
+运行时完全离线。要刷新数据，维护者单独跑这个工具（不属于打包后的应用）：
 
 ```bash
-python tools/update_economy_tiers.py --check      # validate + report age
-python tools/update_economy_tiers.py --sources    # list sources to re-verify
-# ...hand-edit tiers/confidence against at least two sources + official trade...
-python tools/update_economy_tiers.py --touch      # stamp last_updated/checked_at
+python tools/update_economy_tiers.py --check      # 校验并报告数据年龄
+python tools/update_economy_tiers.py --sources    # 列出需要复核的来源
+# ……对照至少两个来源 + 官方交易行手工修档次/置信度……
+python tools/update_economy_tiers.py --touch      # 更新 last_updated/checked_at
 ```
 
-Confirm chase items against the official Trade 2 site's listing volume and at
-least one other source before promoting a tier. **Boss-only uniques cannot be
-chanced** and must never appear in `chance_bases`.
+提升某个物品的档次前，先用官方 Trade 2 站的挂单量加至少一个其他来源交叉确认。
+**只有首领掉落、无法用机会石获得的传奇**绝不能出现在 `chance_bases` 里。
 
-## Choosing how each tier looks (in-app editor)
+## 每个档次长什么样（应用内编辑器）
 
-Click **🎨 Edit Tier Styles…** in the Economy Tier dialog to open a visual editor
-with one row per tier (SS_CHANCE_BASE, SS, S, A, B, C, D, F). For each tier you
-set:
+在经济档次对话框里点 **🎨 编辑档次样式…**，会打开一个每个档次一行的可视化编辑器
+（SS_CHANCE_BASE、SS、S、A、B、C、D、F）。每个档次可以设置：
 
-- **Text / Background / Border** colours (click a swatch → colour picker),
-- **Font** size,
-- **Beam** — the `PlayEffect` ground light (a colour, or `None`) + a **Temp**
-  toggle (Temp = only shows briefly on drop),
-- **Minimap** — the `MinimapIcon` marker: size (`None`/0/1/2), colour, and shape,
+- **文字 / 背景 / 边框**颜色（点色块 → 取色器），
+- **字体**大小，
+- **光柱** —— 即 `PlayEffect` 的地面光（选颜色或 `None`）+ **临时** 开关
+  （临时 = 只在掉落瞬间闪一下），
+- **小地图** —— `MinimapIcon` 标记：大小（`None`/0/1/2）、颜色、形状，
 
-with a live preview per row. Give it a **Preset name** and **Save Preset**. Your
-preset is saved as a *named template* in your per-user config dir (alongside the
-app's settings), appears in the **Template** dropdown, and can be edited or
-deleted later. The shipped **High Contrast Economy Tiers** default can't be
-overwritten — saving from it creates a copy.
+每行都有实时预览。填一个**预设名称**再**保存预设**，预设会以*命名模板*的形式存到
+你的用户配置目录（和应用设置放在一起），出现在**模板**下拉框里，之后可以编辑或删除。
+内置的 **High Contrast Economy Tiers** 默认模板不能被覆盖 —— 从它保存会另存一份副本。
 
-### Editing the JSON directly (advanced)
+### 直接改 JSON（进阶）
 
-The shipped template lives in `data/color_templates/economy_tier_templates.json`
-and your presets in `<user-config>/economy_tier/economy_tier_templates.json`. Both
-are schema-validated and every colour/effect/minimap token is checked against
-PoE's allowed enums on load — a bad token is rejected with a clear message rather
-than producing a filter the client silently refuses. Never add a sound directive;
-the schema forbids it.
+内置模板在 `data/color_templates/economy_tier_templates.json`，你的预设在
+`<用户配置目录>/economy_tier/economy_tier_templates.json`。两者都做 schema 校验，
+每个颜色/特效/小地图取值在加载时都会对照 PoE 允许的枚举检查 —— 非法取值会被明确
+报错拒绝，而不是生成一份客户端静默不认的过滤器。永远不要加音效指令，schema 禁止。
 
-> These files are intentionally separate from the older
-> `data/color_templates/templates.json` used by the manual colour editor, which
-> has a different schema.
+> 这两个文件刻意和手动颜色编辑用的旧文件 `data/color_templates/templates.json` 分开，
+> 两者的 schema 不同。
 
-## Restoring
+## 恢复
 
-Pick `Restore Previous Visuals` (dropdown or dialog). It reverts the most recent
-economy-tier apply on the current file using the disk-persisted operation history
-(stored per-user alongside the app's settings). A backup of the pre-restore state
-is created first.
+选 `恢复上一次视觉`（下拉框或对话框）。它会用落盘的操作历史（按用户存放，和应用设置
+同级）回退当前文件上最近一次经济档次应用。回退前会先为“回退前的状态”建一份备份。
 
-## ⚠ Caveat
+## ⚠ 注意事项
 
-Economy values change every league and within a league. The tier data is a
-relative-value snapshot, never prices. Re-verify before trusting it, and prefer
-`Preview Only` first.
+经济价值每个赛季都在变，赛季内也在变。档次数据是**相对价值快照，不是价格**。
+信它之前先复核一遍，并且建议先用 `仅预览` 看一眼。

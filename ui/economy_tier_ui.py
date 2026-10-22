@@ -73,7 +73,7 @@ class _EconomyTierDialog:
         ctk.CTkLabel(
             wrapper,
             text=f"过滤器：{os.path.basename(app.filter_path)}",
-            font=("Segoe UI Semibold", 13),
+            font=("Microsoft YaHei UI", 13, "bold"),
         ).pack(anchor="w")
         ctk.CTkLabel(
             wrapper,
@@ -157,7 +157,7 @@ class _EconomyTierDialog:
         # Transfer checkboxes.
         toggles = ctk.CTkFrame(parent, fg_color=pal.panel_alt)
         toggles.pack(fill="x", pady=(0, 6))
-        ctk.CTkLabel(toggles, text="迁移内容：", font=("Segoe UI Semibold", 11)).pack(
+        ctk.CTkLabel(toggles, text="迁移内容：", font=("Microsoft YaHei UI", 11, "bold")).pack(
             side="left", padx=(8, 8), pady=6
         )
 
@@ -250,7 +250,7 @@ class _EconomyTierDialog:
 
     def _build_preview_area(self, parent):
         pal = self.pal
-        self.summary_label = ctk.CTkLabel(parent, text="", justify="left", font=("Segoe UI", 11))
+        self.summary_label = ctk.CTkLabel(parent, text="", justify="left", font=("Microsoft YaHei UI", 11))
         self.summary_label.pack(anchor="w", pady=(4, 2))
 
         self.warn_label = ctk.CTkLabel(

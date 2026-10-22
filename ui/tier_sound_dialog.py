@@ -74,7 +74,7 @@ class _TierSoundDialog:
         wrapper = ctk.CTkFrame(self.dlg, fg_color=self.pal.panel)
         wrapper.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(wrapper, text="按档次设置音效", font=("Segoe UI Semibold", 14)).pack(
+        ctk.CTkLabel(wrapper, text="按档次设置音效", font=("Microsoft YaHei UI", 14, "bold")).pack(
             anchor="w"
         )
         ctk.CTkLabel(
@@ -123,7 +123,7 @@ class _TierSoundDialog:
                 text=tier,
                 width=130,
                 anchor="w",
-                font=("Segoe UI Semibold", 12),
+                font=("Microsoft YaHei UI", 12, "bold"),
             ).pack(side="left")
             ctk.CTkLabel(
                 cell,

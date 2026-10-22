@@ -400,7 +400,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
 
     # Title
     title = ctk.CTkLabel(main_container, text="🔀 智能赛季迁移",
-                        font=("Segoe UI", 18, "bold"))
+                        font=("Microsoft YaHei UI", 18, "bold"))
     title.pack(pady=(0, 10))
 
     # File selection
@@ -512,7 +512,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     detail_frame.pack(fill="x", pady=(0, 10))
 
     ctk.CTkLabel(detail_frame, text="匹配详情：",
-                font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
+                font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
 
     detail_text = ctk.CTkTextbox(detail_frame, height=150, wrap="none")
     detail_text.pack(fill="x", padx=10, pady=5)

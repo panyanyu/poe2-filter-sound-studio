@@ -100,7 +100,7 @@ class _TierDetailDialog:
             parent,
             text=f"{_TIER_LABELS[self.tier]} 档次 — {len(in_tier)} 个块，"
                  f"其中 {with_override} 个有自定义覆盖",
-            font=("Segoe UI Semibold", 14),
+            font=("Microsoft YaHei UI", 14, "bold"),
         ).pack(anchor="w")
         ctk.CTkLabel(
             parent,
@@ -121,7 +121,7 @@ class _TierDetailDialog:
         left.pack(side="left", fill="y", padx=8, pady=8)
 
         ctk.CTkLabel(left, text="预览",
-                     font=("Segoe UI Semibold", 11)).pack(anchor="w")
+                     font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
 
         # Use a raw tk.Frame for the preview so we can drive its bg colour
         # directly without CTk theme interference.
@@ -132,12 +132,12 @@ class _TierDetailDialog:
         self._preview_inner.pack(fill="both", expand=True)
         self._preview_label = tk.Label(
             self._preview_inner, text="卡兰德的魔镜",
-            font=("Segoe UI Semibold", 14),
+            font=("Microsoft YaHei UI", 14, "bold"),
         )
         self._preview_label.pack(expand=True)
         self._preview_extra = tk.Label(
             self._preview_inner, text="",
-            font=("Segoe UI", 9),
+            font=("Microsoft YaHei UI", 9),
         )
         self._preview_extra.pack(side="bottom", fill="x")
 
@@ -146,7 +146,7 @@ class _TierDetailDialog:
         right.pack(side="left", fill="both", expand=True, padx=(8, 8), pady=8)
 
         ctk.CTkLabel(right, text="样式",
-                     font=("Segoe UI Semibold", 11)).pack(anchor="w")
+                     font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
 
         # Color rows.
         self._build_color_row(right, "Text color", "text_color")
@@ -263,7 +263,7 @@ class _TierDetailDialog:
         self._list_title = ctk.CTkLabel(
             header_row,
             text=f"{_TIER_LABELS[self.tier]} 档次的物品",
-            font=("Segoe UI Semibold", 11),
+            font=("Microsoft YaHei UI", 11, "bold"),
         )
         self._list_title.pack(side="left", padx=(0, 12))
         ctk.CTkLabel(header_row, text="搜索：",
@@ -283,7 +283,7 @@ class _TierDetailDialog:
         self._search_hint = ctk.CTkLabel(
             header_row,
             text="（留空＝仅本档次 · 输入内容＝搜索所有档次）",
-            text_color=pal.text_muted, font=("Segoe UI", 9),
+            text_color=pal.text_muted, font=("Microsoft YaHei UI", 9),
         )
         self._search_hint.pack(side="left", padx=(8, 0))
 
@@ -451,7 +451,7 @@ class _TierDetailDialog:
         self._preview_inner.configure(bg=bg)
         self._preview_label.configure(
             bg=bg, fg=text_color,
-            font=("Segoe UI Semibold", font_size),
+            font=("Microsoft YaHei UI", font_size),
         )
         extras = []
         if s.play_effect:

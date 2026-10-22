@@ -59,7 +59,7 @@ class _Tooltip:
         tk.Label(
             tw, text=self.text, justify="left", background="#23262b",
             foreground="#e9e9e9", relief="solid", borderwidth=1,
-            font=("Segoe UI", 9), wraplength=340, padx=8, pady=5,
+            font=("Microsoft YaHei UI", 9), wraplength=340, padx=8, pady=5,
         ).pack()
 
     def _hide(self, _e=None):
@@ -111,7 +111,7 @@ class VisibilityManagerTab:
         # ---- Intro note ----
         note = ctk.CTkLabel(
             root, text="🛈  " + _INTRO_TEXT, anchor="w", justify="left",
-            font=("Segoe UI", 11), wraplength=1200,
+            font=("Microsoft YaHei UI", 11), wraplength=1200,
         )
         note.pack(fill="x", padx=12, pady=(10, 4))
         tm.register_widget(note, tm.ROLE_TEXT_MUTED)
@@ -124,7 +124,7 @@ class VisibilityManagerTab:
         row1 = ctk.CTkFrame(controls, fg_color="transparent")
         row1.pack(fill="x", padx=8, pady=(8, 2))
 
-        ctk.CTkLabel(row1, text="搜索", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="搜索", font=("Microsoft YaHei UI", 10, "bold")).pack(side="left", padx=(2, 4))
         self.search_box = ctk.CTkEntry(
             row1, height=32, width=240,
             placeholder_text="搜索基底、类别、章节…",
@@ -133,7 +133,7 @@ class VisibilityManagerTab:
         self.search_box.bind("<KeyRelease>", lambda _e: self._populate())
         tm.register_widget(self.search_box, tm.ROLE_ENTRY)
 
-        ctk.CTkLabel(row1, text="显隐", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="显隐", font=("Microsoft YaHei UI", 10, "bold")).pack(side="left", padx=(2, 4))
         self.vis_filter = ctk.CTkOptionMenu(
             row1, width=160, command=lambda _v: self._populate(),
             values=["全部", "当前显示", "当前隐藏"],
@@ -142,7 +142,7 @@ class VisibilityManagerTab:
         self.vis_filter.pack(side="left", padx=(0, 10))
         tm.register_widget(self.vis_filter, tm.ROLE_GHOST)
 
-        ctk.CTkLabel(row1, text="章节", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="章节", font=("Microsoft YaHei UI", 10, "bold")).pack(side="left", padx=(2, 4))
         self.cat_filter = ctk.CTkOptionMenu(
             row1, width=200, command=lambda _v: self._populate(), values=["全部章节"],
         )
@@ -150,7 +150,7 @@ class VisibilityManagerTab:
         self.cat_filter.pack(side="left", padx=(0, 10))
         tm.register_widget(self.cat_filter, tm.ROLE_GHOST)
 
-        ctk.CTkLabel(row1, text="分组", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="分组", font=("Microsoft YaHei UI", 10, "bold")).pack(side="left", padx=(2, 4))
         self.group_filter = ctk.CTkOptionMenu(
             row1, width=190, command=lambda _v: self._populate(),
             values=["全部分组"] + list(SMART_GROUPS),
@@ -168,7 +168,7 @@ class VisibilityManagerTab:
         row2 = ctk.CTkFrame(controls, fg_color="transparent")
         row2.pack(fill="x", padx=8, pady=(2, 8))
 
-        ctk.CTkLabel(row2, text="选择", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row2, text="选择", font=("Microsoft YaHei UI", 10, "bold")).pack(side="left", padx=(2, 4))
         self.sel_all_btn = ctk.CTkButton(row2, text="选中可见行", width=110, command=self._select_all_visible)
         self.sel_all_btn.pack(side="left", padx=2)
         self.clear_sel_btn = ctk.CTkButton(row2, text="清除", width=70, command=self._clear_selection)
@@ -237,7 +237,7 @@ class VisibilityManagerTab:
         # accent colors that read on both light and dark backgrounds.
         self.tree.tag_configure("oddrow", background="#2f2f2f")
         self.tree.tag_configure("evenrow", background="#292929")
-        self.tree.tag_configure("pending", foreground="#ffd166", font=("Segoe UI", 9, "bold"))
+        self.tree.tag_configure("pending", foreground="#ffd166", font=("Microsoft YaHei UI", 9, "bold"))
         self.tree.tag_configure("risk_high", foreground="#ff7b7b")
         self.tree.tag_configure("risk_med", foreground="#ffc36b")
         tm.register_treeview_tags(self.tree, {
@@ -252,7 +252,7 @@ class VisibilityManagerTab:
         self.tree.bind("<Control-A>", self._select_all_visible)
 
         # ---- Status line ----
-        self.status = ctk.CTkLabel(root, text="未加载过滤器。", anchor="w", font=("Segoe UI", 11))
+        self.status = ctk.CTkLabel(root, text="未加载过滤器。", anchor="w", font=("Microsoft YaHei UI", 11))
         self.status.pack(fill="x", padx=12, pady=(0, 8))
         tm.register_widget(self.status, tm.ROLE_TEXT_MUTED)
 
@@ -476,14 +476,14 @@ class VisibilityManagerTab:
         new_word = v.desired_visibility
         head = (f"Block at line {v.start_line + 1} • Section: {v.category}"
                 + (f" › {v.subsection}" if v.subsection else ""))
-        ctk.CTkLabel(wrap, text=head, font=("Segoe UI Semibold", 12),
+        ctk.CTkLabel(wrap, text=head, font=("Microsoft YaHei UI", 12, "bold"),
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(2, 2))
         change_note = (
             f"First line will change:  {v.current_visibility}  →  {new_word}"
             if v.has_pending_change else
             f"Currently: {v.current_visibility}  (no pending change)"
         )
-        ctk.CTkLabel(wrap, text=change_note, font=("Segoe UI", 11),
+        ctk.CTkLabel(wrap, text=change_note, font=("Microsoft YaHei UI", 11),
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(0, 6))
 
         txt = tk.Text(wrap, wrap="none", height=min(24, max(6, len(v.raw_lines) + 1)),
@@ -530,7 +530,7 @@ class VisibilityManagerTab:
         wrap.pack(fill="both", expand=True, padx=12, pady=12)
 
         ctk.CTkLabel(wrap, text="确认显隐改动",
-                     font=("Segoe UI Semibold", 15), anchor="w").pack(fill="x", padx=6, pady=(2, 6))
+                     font=("Microsoft YaHei UI", 15, "bold"), anchor="w").pack(fill="x", padx=6, pady=(2, 6))
 
         # Summary + warnings banner
         backup_dir = self._expected_backup_dir()
@@ -542,14 +542,14 @@ class VisibilityManagerTab:
             f"• A backup will be created in:  {backup_dir}",
         ]
         summary = ctk.CTkLabel(wrap, text="\n".join(summary_lines), anchor="w",
-                               justify="left", font=("Segoe UI", 11))
+                               justify="left", font=("Microsoft YaHei UI", 11))
         summary.pack(fill="x", padx=6, pady=(0, 6))
 
         warn_msgs = self._build_warnings(changes, to_hide, high_risk)
         if warn_msgs:
             warn = ctk.CTkLabel(
                 wrap, text="⚠  " + "\n⚠  ".join(warn_msgs), anchor="w",
-                justify="left", font=("Segoe UI Semibold", 11), text_color="#ffb454")
+                justify="left", font=("Microsoft YaHei UI", 11, "bold"), text_color="#ffb454")
             warn.pack(fill="x", padx=6, pady=(0, 8))
 
         # Planned-changes table
