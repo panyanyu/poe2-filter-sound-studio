@@ -9,7 +9,7 @@
     directly on `main`), push the branch, and open or update the pull request
     with a clear title and description — without being asked each time.
   - Use the `gh` CLI for PRs/issues (the user is authenticated as
-    `xtheredshirtx`, if `gh` is installed). Remote is `origin`
+    `panyanyu`). Remote is `origin`
     (https://github.com/panyanyu/poe2-filter-sound-studio).
   - Explain in plain language what was pushed and give the PR link; don't assume
     git knowledge.
