@@ -27,6 +27,7 @@ old sound files/
 
 # Local tool config
 .claude/
+.workbuddy/
 
 # OS / editor
 Thumbs.db
