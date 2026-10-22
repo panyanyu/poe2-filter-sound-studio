@@ -492,7 +492,7 @@ python -c "from core.user_overrides import block_signature; print(block_signatur
 - Pause before destructive operations (force-push, history rewrite, branch
   delete, PR merge).
 - `gh` CLI auth as `xtheredshirtx`. Remote `origin` =
-  `https://github.com/xtheredshirtx/poe2-filter-sound-studio`.
+  `https://github.com/panyanyu/poe2-filter-sound-studio`.
 - Commit author: `xtheredshirtx <xtheredshirtx@users.noreply.github.com>`
   (set repo-local).
 
