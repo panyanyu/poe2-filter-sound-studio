@@ -3686,7 +3686,7 @@ class FilterSoundEditor:
         "Need more detail? Click 'Open Full Guide' below for the complete README."
     )
 
-    README_URL = "https://github.com/xtheredshirtx/poe2-filter-sound-studio#readme"
+    README_URL = "https://github.com/panyanyu/poe2-filter-sound-studio#readme"
 
     def show_how_to_use_dialog(self):
         dlg = ctk.CTkToplevel(self.root)

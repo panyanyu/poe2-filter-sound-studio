@@ -7,7 +7,7 @@ health checks, color rules, and season-to-season sound migration.
 ![Main editor — Witch (Necro Purple) theme](docs/editor-witch-purple.png)
 
 > **Want the standalone Windows EXE?** Grab `App_v3.exe` from the
-> [Releases page](https://github.com/xtheredshirtx/poe2-filter-sound-studio/releases)
+> [Releases page](https://github.com/panyanyu/poe2-filter-sound-studio/releases)
 > — no Python install required, FFmpeg bundled.
 
 The current source entry point is `main.py`.

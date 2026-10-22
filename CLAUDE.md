@@ -15,8 +15,8 @@
     git knowledge.
   - Still pause for confirmation before anything destructive (force-push, history
     rewrite, deleting branches, merging a PR).
-  - Commit author identity for this repo: `xtheredshirtx
-    <xtheredshirtx@users.noreply.github.com>` (set repo-locally).
+  - Commit author identity for this repo: `pyy <704508940@qq.com>` (set
+    repo-locally).
 
 ## Project layout
 
