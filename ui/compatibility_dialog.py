@@ -82,13 +82,13 @@ class _CompatibilityDialog:
         # ----- Header -----
         ctk.CTkLabel(
             main,
-            text=f"Filter: {os.path.basename(app.filter_path) if app.filter_path else '(unsaved)'}",
+            text=f"过滤器：{os.path.basename(app.filter_path) if app.filter_path else '（未保存）'}",
             font=("Segoe UI Semibold", 13),
         ).pack(anchor="w")
 
         rules_label = report.rules_file or "(no rules file)"
         ctk.CTkLabel(
-            main, text=f"Rules: {rules_label}",
+            main, text=f"规则：{rules_label}",
             text_color=pal.text_muted,
         ).pack(anchor="w", pady=(0, 8))
 
@@ -116,12 +116,12 @@ class _CompatibilityDialog:
         cols = ("apply", "line", "kind", "current", "suggested", "message")
         tree = ttk.Treeview(tf, columns=cols, show="headings",
                             height=14, selectmode="browse")
-        tree.heading("apply", text="Fix?")
-        tree.heading("line", text="Line")
-        tree.heading("kind", text="Issue")
-        tree.heading("current", text="Current")
-        tree.heading("suggested", text="Suggested")
-        tree.heading("message", text="Details")
+        tree.heading("apply", text="修复？")
+        tree.heading("line", text="行号")
+        tree.heading("kind", text="问题")
+        tree.heading("current", text="当前")
+        tree.heading("suggested", text="建议")
+        tree.heading("message", text="详情")
         tree.column("apply", width=50, anchor="center")
         tree.column("line", width=60, anchor="e")
         tree.column("kind", width=110, anchor="w")
@@ -178,27 +178,27 @@ class _CompatibilityDialog:
         # ----- Bulk toggles -----
         toggles = ctk.CTkFrame(main, fg_color="transparent")
         toggles.pack(fill="x", pady=(0, 4))
-        ctk.CTkButton(toggles, text="Select all fixable",
+        ctk.CTkButton(toggles, text="全选可修复项",
                       command=self._select_all_fixable, width=160).pack(side="left", padx=4)
-        ctk.CTkButton(toggles, text="Deselect all",
+        ctk.CTkButton(toggles, text="全部取消",
                       command=self._deselect_all, width=140).pack(side="left", padx=4)
-        ctk.CTkButton(toggles, text="📝 Edit Rules File",
+        ctk.CTkButton(toggles, text="📝 编辑规则文件",
                       command=self._open_rules_file, width=160).pack(side="right", padx=4)
 
         # ----- Buttons -----
         btn_row = ctk.CTkFrame(main, fg_color="transparent")
         btn_row.pack(fill="x", pady=(10, 0))
         ctk.CTkButton(
-            btn_row, text="Skip", command=self._on_cancel, width=120,
+            btn_row, text="跳过", command=self._on_cancel, width=120,
             fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text,
         ).pack(side="right", padx=4)
         self.apply_btn = ctk.CTkButton(
-            btn_row, text="Apply Fixes", command=self._on_apply, width=180,
+            btn_row, text="应用修复", command=self._on_apply, width=180,
             fg_color=pal.accent, hover_color=pal.accent_hover, text_color=pal.accent_text,
         )
         self.apply_btn.pack(side="right", padx=4)
 
-        app._setup_dialog(self.dlg, title="Filter Compatibility Check",
+        app._setup_dialog(self.dlg, title="过滤器兼容性检查",
                           default_size=(1100, 720), min_size=(900, 560))
 
     # ---------- handlers ----------
@@ -236,11 +236,11 @@ class _CompatibilityDialog:
 
         menu = tk.Menu(self.tree, tearoff=False)
         menu.add_command(
-            label=f"Whitelist '{command}' (won't be flagged again)",
+            label=f"把「{command}」加入白名单（以后不再提示）",
             command=lambda c=command: self._whitelist_command(c),
         )
         menu.add_separator()
-        menu.add_command(label="Cancel", command=lambda: None)
+        menu.add_command(label="取消", command=lambda: None)
         try:
             self.tree.selection_set(row)
             self.tree.focus(row)
@@ -272,7 +272,7 @@ class _CompatibilityDialog:
                               description=f"Allow POE2 command '{command}' "
                                            "(whitelisted via right-click)."):
             messagebox.showinfo(
-                f"Whitelisted '{command}'",
+                f"已把「{command}」加入白名单",
                 f"Added an allow-rule for '{command}' to:\n  {rules_path}\n\n"
                 "Future loads of any filter will no longer flag this command. "
                 "Close this dialog and re-run the check to see it disappear.",
@@ -328,7 +328,7 @@ class _CompatibilityDialog:
             else:
                 subprocess.Popen(["xdg-open", path])
         except Exception as e:
-            messagebox.showerror("Open failed", str(e))
+            messagebox.showerror("打开失败", str(e))
 
     def _on_cancel(self):
         self.result_lines = self.lines

@@ -20,6 +20,8 @@ from tkinter import ttk, messagebox
 
 import customtkinter as ctk
 
+from core.zh import rarity_display, risk_label, visibility_label
+
 from features.visibility_manager import (
     VisibilityManager, VisibilityBlockView, SMART_GROUPS, smart_group_for,
 )
@@ -122,66 +124,66 @@ class VisibilityManagerTab:
         row1 = ctk.CTkFrame(controls, fg_color="transparent")
         row1.pack(fill="x", padx=8, pady=(8, 2))
 
-        ctk.CTkLabel(row1, text="Search", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="搜索", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
         self.search_box = ctk.CTkEntry(
             row1, height=32, width=240,
-            placeholder_text="Search base, class, section…",
+            placeholder_text="搜索基底、类别、章节…",
         )
         self.search_box.pack(side="left", padx=(0, 10))
         self.search_box.bind("<KeyRelease>", lambda _e: self._populate())
         tm.register_widget(self.search_box, tm.ROLE_ENTRY)
 
-        ctk.CTkLabel(row1, text="Visibility", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="显隐", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
         self.vis_filter = ctk.CTkOptionMenu(
             row1, width=160, command=lambda _v: self._populate(),
-            values=["All", "Currently Shown", "Currently Hidden"],
+            values=["全部", "当前显示", "当前隐藏"],
         )
-        self.vis_filter.set("All")
+        self.vis_filter.set("全部")
         self.vis_filter.pack(side="left", padx=(0, 10))
         tm.register_widget(self.vis_filter, tm.ROLE_GHOST)
 
-        ctk.CTkLabel(row1, text="Section", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="章节", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
         self.cat_filter = ctk.CTkOptionMenu(
-            row1, width=200, command=lambda _v: self._populate(), values=["All sections"],
+            row1, width=200, command=lambda _v: self._populate(), values=["全部章节"],
         )
-        self.cat_filter.set("All sections")
+        self.cat_filter.set("全部章节")
         self.cat_filter.pack(side="left", padx=(0, 10))
         tm.register_widget(self.cat_filter, tm.ROLE_GHOST)
 
-        ctk.CTkLabel(row1, text="Group", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        ctk.CTkLabel(row1, text="分组", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
         self.group_filter = ctk.CTkOptionMenu(
             row1, width=190, command=lambda _v: self._populate(),
-            values=["All groups"] + SMART_GROUPS,
+            values=["全部分组"] + list(SMART_GROUPS),
         )
-        self.group_filter.set("All groups")
+        self.group_filter.set("全部分组")
         self.group_filter.pack(side="left", padx=(0, 10))
         tm.register_widget(self.group_filter, tm.ROLE_GHOST)
 
-        self.refresh_btn = ctk.CTkButton(row1, text="↻ Refresh", width=100, command=self.refresh)
+        self.refresh_btn = ctk.CTkButton(row1, text="↻ 刷新", width=100, command=self.refresh)
         self.refresh_btn.pack(side="right", padx=(6, 2))
         tm.register_widget(self.refresh_btn, tm.ROLE_GHOST)
-        _Tooltip(self.refresh_btn, "Reload the list from the current filter, discarding pending toggles.")
+        _Tooltip(self.refresh_btn, "从当前过滤器重新载入列表，未应用的改动会被丢弃。")
 
         # ---- Row 2: bulk + apply actions ----
         row2 = ctk.CTkFrame(controls, fg_color="transparent")
         row2.pack(fill="x", padx=8, pady=(2, 8))
 
-        ctk.CTkLabel(row2, text="Selection", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
-        self.sel_all_btn = ctk.CTkButton(row2, text="Select visible", width=110, command=self._select_all_visible)
+        ctk.CTkLabel(row2, text="选择", font=("Segoe UI Semibold", 10)).pack(side="left", padx=(2, 4))
+        self.sel_all_btn = ctk.CTkButton(row2, text="选中可见行", width=110, command=self._select_all_visible)
         self.sel_all_btn.pack(side="left", padx=2)
-        self.clear_sel_btn = ctk.CTkButton(row2, text="Clear", width=70, command=self._clear_selection)
+        self.clear_sel_btn = ctk.CTkButton(row2, text="清除", width=70, command=self._clear_selection)
         self.clear_sel_btn.pack(side="left", padx=2)
 
         self.set_show_btn = ctk.CTkButton(
-            row2, text="👁 Set to Shown", width=130,
+            row2, text="👁 设为显示", width=130,
             command=lambda: self._set_target_visibility("Show"))
         self.set_show_btn.pack(side="left", padx=(12, 2))
         self.set_hide_btn = ctk.CTkButton(
-            row2, text="🚫 Set to Hidden", width=130, fg_color="#5b3a0c",
+            row2, text="🚫 设为隐藏", width=130, fg_color="#5b3a0c",
             command=lambda: self._set_target_visibility("Hide"))
         self.set_hide_btn.pack(side="left", padx=2)
         self.reset_btn = ctk.CTkButton(
-            row2, text="↺ Reset", width=90,
+            row2, text="↺ 撤销", width=90,
             command=self._reset_target)
         self.reset_btn.pack(side="left", padx=2)
         _Tooltip(self.set_show_btn, "Mark the selected rows (or all visible rows) to be Shown.")
@@ -189,10 +191,10 @@ class VisibilityManagerTab:
         _Tooltip(self.reset_btn, "Undo pending toggles on the selected/visible rows.")
 
         self.apply_btn = ctk.CTkButton(
-            row2, text="✔ Apply Changes…", width=150, command=self._apply_clicked)
+            row2, text="✔ 应用改动…", width=150, command=self._apply_clicked)
         self.apply_btn.pack(side="right", padx=2)
         self.revert_btn = ctk.CTkButton(
-            row2, text="Revert Unsaved", width=130, command=self._revert_all)
+            row2, text="撤销未保存的改动", width=130, command=self._revert_all)
         self.revert_btn.pack(side="right", padx=2)
         _Tooltip(self.apply_btn, "Review and write all pending Show/Hide changes to the filter (a backup is made first).")
         _Tooltip(self.revert_btn, "Discard every pending toggle and return all rows to their saved state.")
@@ -250,7 +252,7 @@ class VisibilityManagerTab:
         self.tree.bind("<Control-A>", self._select_all_visible)
 
         # ---- Status line ----
-        self.status = ctk.CTkLabel(root, text="No filter loaded.", anchor="w", font=("Segoe UI", 11))
+        self.status = ctk.CTkLabel(root, text="未加载过滤器。", anchor="w", font=("Segoe UI", 11))
         self.status.pack(fill="x", padx=12, pady=(0, 8))
         tm.register_widget(self.status, tm.ROLE_TEXT_MUTED)
 
@@ -268,10 +270,10 @@ class VisibilityManagerTab:
             if v.category not in seen:
                 seen.add(v.category)
                 sections.append(v.category)
-        values = ["All sections"] + sections
+        values = ["全部章节"] + sections
         self.cat_filter.configure(values=values)
         if self.cat_filter.get() not in values:
-            self.cat_filter.set("All sections")
+            self.cat_filter.set("全部章节")
 
     def _visible_views(self) -> list[VisibilityBlockView]:
         """Apply the current search + dropdown filters to the parsed blocks."""
@@ -282,13 +284,13 @@ class VisibilityManagerTab:
 
         out = []
         for v in self.manager.blocks:
-            if vis == "Currently Shown" and v.current_visibility != "Show":
+            if vis == "当前显示" and v.current_visibility != "Show":
                 continue
-            if vis == "Currently Hidden" and v.current_visibility != "Hide":
+            if vis == "当前隐藏" and v.current_visibility != "Hide":
                 continue
-            if cat != "All sections" and v.category != cat:
+            if cat != "全部章节" and v.category != cat:
                 continue
-            if grp != "All groups" and smart_group_for(v) != grp:
+            if grp != "全部分组" and smart_group_for(v) != grp:
                 continue
             if kw:
                 hay = " ".join([
@@ -316,17 +318,17 @@ class VisibilityManagerTab:
         base = ", ".join(v.base_types[:3]) + (f" +{len(v.base_types) - 3}" if len(v.base_types) > 3 else "")
         klass = ", ".join(v.classes[:3]) + (f" +{len(v.classes) - 3}" if len(v.classes) > 3 else "")
         fx = "; ".join(p for p in (
-            (f"FX {v.effect_summary}" if v.effect_summary else ""),
-            (f"Map {v.minimap_summary}" if v.minimap_summary else ""),
+            (f"光柱 {v.effect_summary}" if v.effect_summary else ""),
+            (f"小地图 {v.minimap_summary}" if v.minimap_summary else ""),
         ) if p)
         return (
             pending,
-            "Show" if v.current_visibility == "Show" else "Hide",
-            v.desired_visibility,
-            v.risk_level,
+            visibility_label(v.current_visibility),
+            visibility_label(v.desired_visibility),
+            risk_label(v.risk_level),
             v.category,
             v.subsection,
-            v.rarity,
+            rarity_display(v.rarity),
             klass,
             base,
             v.item_level,
@@ -410,11 +412,11 @@ class VisibilityManagerTab:
 
     def _build_menu(self):
         m = tk.Menu(self.tree, tearoff=False)
-        m.add_command(label="Set to Shown", command=lambda: self._ctx_set("Show"))
-        m.add_command(label="Set to Hidden", command=lambda: self._ctx_set("Hide"))
-        m.add_command(label="Reset to current", command=self._ctx_reset)
+        m.add_command(label="设为显示", command=lambda: self._ctx_set("Show"))
+        m.add_command(label="设为隐藏", command=lambda: self._ctx_set("Hide"))
+        m.add_command(label="恢复为当前状态", command=self._ctx_reset)
         m.add_separator()
-        m.add_command(label="Preview raw block…", command=self._ctx_preview)
+        m.add_command(label="查看原始规则块…", command=self._ctx_preview)
         return m
 
     def _ctx_targets(self) -> list[VisibilityBlockView]:
@@ -498,15 +500,15 @@ class VisibilityManagerTab:
 
         btns = ctk.CTkFrame(wrap, fg_color="transparent")
         btns.pack(fill="x", padx=4, pady=(4, 2))
-        ctk.CTkButton(btns, text="Close", width=100, command=dlg.destroy).pack(side="right")
+        ctk.CTkButton(btns, text="关闭", width=100, command=dlg.destroy).pack(side="right")
 
-        self.app._setup_dialog(dlg, title="Raw block preview",
+        self.app._setup_dialog(dlg, title="原始规则块预览",
                                default_size=(720, 460), min_size=(520, 320))
 
     def _apply_clicked(self):
         changes = self.manager.pending_changes()
         if not changes:
-            messagebox.showinfo("Nothing to apply",
+            messagebox.showinfo("没有可应用的改动",
                                 "No pending Show/Hide changes. Toggle some rows first.")
             return
         if not self.app.filter_path or not os.path.isfile(self.app.filter_path):
@@ -527,7 +529,7 @@ class VisibilityManagerTab:
         wrap = ctk.CTkFrame(dlg, corner_radius=10)
         wrap.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(wrap, text="Review visibility changes",
+        ctk.CTkLabel(wrap, text="确认显隐改动",
                      font=("Segoe UI Semibold", 15), anchor="w").pack(fill="x", padx=6, pady=(2, 6))
 
         # Summary + warnings banner
@@ -582,17 +584,17 @@ class VisibilityManagerTab:
         # Buttons
         btns = ctk.CTkFrame(wrap, fg_color="transparent")
         btns.pack(fill="x", padx=6, pady=(2, 2))
-        ctk.CTkButton(btns, text="Cancel", width=110, command=dlg.destroy,
+        ctk.CTkButton(btns, text="取消", width=110, command=dlg.destroy,
                       fg_color="gray35").pack(side="right", padx=4)
 
         def _do_apply():
             dlg.destroy()
             self._do_apply()
 
-        ctk.CTkButton(btns, text=f"Apply {len(changes)} change(s)", width=170,
+        ctk.CTkButton(btns, text=f"应用 {len(changes)} 项改动", width=170,
                       command=_do_apply).pack(side="right", padx=4)
 
-        self.app._setup_dialog(dlg, title="Review visibility changes",
+        self.app._setup_dialog(dlg, title="确认显隐改动",
                                default_size=(820, 560), min_size=(640, 420))
 
     def _build_warnings(self, changes, to_hide, high_risk):

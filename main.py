@@ -41,6 +41,11 @@ from core.compatibility import (
 from ui.compatibility_dialog import show_compatibility_dialog
 from ui.visual_tools_dialog import open_visual_tools
 from core.app_logging import init_logging, get_logger, get_log_path, shutdown as logging_shutdown
+from core.zh import (
+    appearance_label, appearance_value, palette_label, palette_value,
+    mode_label, mode_value, rarity_label, sound_type_label, visibility_label,
+    rarity_display, tier_label as tier_zh,
+)
 
 log = get_logger(__name__)
 
@@ -326,9 +331,9 @@ class FilterSoundEditor:
         # Tabview
         self.tabs = ctk.CTkTabview(self.frame, corner_radius=12)
         self.tabs.pack(fill="both", expand=True)
-        tab_edit = self.tabs.add("Editor")
-        tab_visibility = self.tabs.add("Item Visibility")
-        tab_merge = self.tabs.add("Merge")
+        tab_edit = self.tabs.add("编辑器")
+        tab_visibility = self.tabs.add("物品显隐")
+        tab_merge = self.tabs.add("赛季迁移")
 
         # ===== Editor tab =====
         # Header
@@ -339,7 +344,7 @@ class FilterSoundEditor:
                              font=("Segoe UI Semibold", 20))
         title.pack(side="left", padx=(12, 8), pady=8)
 
-        self.file_label = ctk.CTkLabel(header, text="No file loaded",
+        self.file_label = ctk.CTkLabel(header, text="未加载文件",
                                        font=("Segoe UI", 12))
         self.file_label.pack(side="left", padx=6, pady=8)
 
@@ -363,7 +368,7 @@ class FilterSoundEditor:
 
         # --- File cluster ---
         file_cluster = _cluster("File")
-        self.load_button = ctk.CTkButton(file_cluster, text="📂 Load Filter",
+        self.load_button = ctk.CTkButton(file_cluster, text="📂 加载过滤器",
                                          command=self.load_filter, width=130)
         self.load_button.pack(side="left", padx=(0, 8), pady=8)
         file_cluster.pack(side="left", padx=(6, 0), pady=6)
@@ -371,42 +376,48 @@ class FilterSoundEditor:
 
         # --- Economy Tier cluster --- (choosing a mode opens the preview dialog,
         # then resets to "Off"; default "Off" does nothing).
-        tier_cluster = _cluster("Economy Tier")
+        tier_cluster = _cluster("经济档次")
         self.economy_mode_selector = ctk.CTkOptionMenu(
-            tier_cluster, values=ECONOMY_TIER_MODES,
+            tier_cluster, values=[mode_label(m) for m in ECONOMY_TIER_MODES],
             command=self._on_economy_mode_selected, width=260,
         )
-        self.economy_mode_selector.set("Off")
+        self.economy_mode_selector.set(mode_label("Off"))
         self.economy_mode_selector.pack(side="left", padx=(0, 8), pady=8)
         tier_cluster.pack(side="left", pady=6)
         _divider()
 
         # --- Appearance cluster (right-aligned) ---
-        appearance_cluster = _cluster("Appearance")
+        appearance_cluster = _cluster("外观")
         self.theme_selector = ctk.CTkOptionMenu(
-            appearance_cluster, values=palette_names(), command=self.change_theme, width=190,
+            appearance_cluster,
+            values=[palette_label(n) for n in palette_names()],
+            command=self.change_theme, width=190,
         )
-        self.theme_selector.set(self.settings.theme_palette if self.settings.theme_palette in palette_names() else palette_names()[0])
+        self.theme_selector.set(palette_label(
+            self.settings.theme_palette if self.settings.theme_palette in palette_names() else palette_names()[0]
+        ))
         self.theme_selector.pack(side="left", padx=(0, 6), pady=8)
         self.appearance_selector = ctk.CTkOptionMenu(
-            appearance_cluster, values=["System", "Light", "Dark"],
+            appearance_cluster, values=[appearance_label(m) for m in ("System", "Light", "Dark")],
             command=self.change_appearance_mode, width=100,
         )
-        self.appearance_selector.set(self.settings.appearance_mode if self.settings.appearance_mode in ("System", "Light", "Dark") else "Dark")
+        self.appearance_selector.set(appearance_label(
+            self.settings.appearance_mode if self.settings.appearance_mode in ("System", "Light", "Dark") else "Dark"
+        ))
         self.appearance_selector.pack(side="left", padx=(0, 8), pady=8)
         appearance_cluster.pack(side="right", padx=(0, 6), pady=6)
         _divider(side="right")
 
         # --- Search cluster (fills the middle) ---
-        search_cluster = _cluster("Search")
+        search_cluster = _cluster("搜索")
         self.search_box = ctk.CTkEntry(
             search_cluster, height=34,
-            placeholder_text="Search rarity, sound, class, basetype… (Ctrl+F)",
+            placeholder_text="搜索稀有度、音效、类别、基底… (Ctrl+F)",
         )
         self.search_box.pack(side="left", fill="x", expand=True, padx=(0, 8), pady=8)
         self.search_box.bind("<KeyRelease>", self.apply_filter)
         self.hide_no_sound_cb = ctk.CTkCheckBox(
-            search_cluster, text="Only with sound",
+            search_cluster, text="仅有音效",
             variable=self.hide_no_sound_var, command=self.apply_filter,
         )
         self.hide_no_sound_cb.pack(side="left", padx=(0, 8), pady=8)
@@ -423,7 +434,7 @@ class FilterSoundEditor:
 
         sidebar_header = ctk.CTkFrame(sidebar, corner_radius=0, fg_color="transparent")
         sidebar_header.pack(fill="x", padx=4, pady=(4, 0))
-        ctk.CTkLabel(sidebar_header, text="Categories", font=("Segoe UI Semibold", 13)).pack(side="left", padx=6, pady=4)
+        ctk.CTkLabel(sidebar_header, text="分类", font=("Segoe UI Semibold", 13)).pack(side="left", padx=6, pady=4)
         self.sidebar_count_label = ctk.CTkLabel(sidebar_header, text="", font=("Segoe UI", 10))
         self.sidebar_count_label.pack(side="right", padx=6, pady=4)
 
@@ -480,9 +491,9 @@ class FilterSoundEditor:
         # can rewrite the heading text with a ▲/▼ indicator on the active column.
         self._tree_columns = columns
         self._tree_heading_text = {
-            "category": "Category", "item": "Item", "tier": "Tier", "rarity": "Rarity",
-            "stype": "Type", "sound": "Sound / ID", "volume": "Vol", "effect": "Effect",
-            "minimap": "Minimap", "context": "Item Context",
+            "category": "分类", "item": "物品", "tier": "档次", "rarity": "稀有度",
+            "stype": "类型", "sound": "音效 / ID", "volume": "音量", "effect": "光柱特效",
+            "minimap": "小地图", "context": "物品条件",
         }
         self._sort_col = None
         self._sort_reverse = False
@@ -538,7 +549,7 @@ class FilterSoundEditor:
         # Context panel
         context_panel = ctk.CTkFrame(body, corner_radius=12)
         context_panel.pack(fill="x", padx=10, pady=(0, 10))
-        self.context_label = ctk.CTkLabel(context_panel, text="Item Context: ", wraplength=1200, justify="left")
+        self.context_label = ctk.CTkLabel(context_panel, text="物品条件：", wraplength=1200, justify="left")
         self.context_label.pack(anchor="w", padx=10, pady=10)
 
         # ----- Right-click hint banner -----
@@ -565,26 +576,26 @@ class FilterSoundEditor:
         # Sound preview is its own row because it's the "live feedback" action.
         preview_bar = FlowBar(tab_edit, corner_radius=12)
         preview_bar.pack(fill="x", padx=6, pady=(4, 2))
-        preview_bar.add(ctk.CTkLabel(preview_bar, text="🔊 Preview",
+        preview_bar.add(ctk.CTkLabel(preview_bar, text="🔊 试听",
                                       font=("Segoe UI Semibold", 11)))
         self.preview_selected_button = ctk.CTkButton(
-            preview_bar, text="▶ Play Selected",
+            preview_bar, text="▶ 试听选中",
             command=self.preview_selected, width=140,
         )
         preview_bar.add(self.preview_selected_button)
         self.preview_changed_button = ctk.CTkButton(
-            preview_bar, text="▶ Play Last Change",
+            preview_bar, text="▶ 试听上次修改",
             command=self.preview_last_change, state="disabled", width=160,
         )
         preview_bar.add(self.preview_changed_button)
         self.stop_button = ctk.CTkButton(
-            preview_bar, text="⏹ Stop", command=self.stop_preview, width=90,
+            preview_bar, text="⏹ 停止", command=self.stop_preview, width=90,
         )
         preview_bar.add(self.stop_button)
         # bulk_checkbox lives in this row too — it's a global mode toggle
         # that affects the "Replace Sound" right-click action.
         self.bulk_checkbox = ctk.CTkCheckBox(
-            preview_bar, text="Bulk-mode: match by sound across all rows",
+            preview_bar, text="批量模式：按音效匹配全部行",
             variable=self.bulk_mode,
         )
         preview_bar.add(self.bulk_checkbox)
@@ -594,40 +605,40 @@ class FilterSoundEditor:
         bulk_options = FlowBar(tab_edit, corner_radius=12)
         bulk_options.pack(fill="x", padx=6, pady=2)
         bulk_options.add(ctk.CTkLabel(
-            bulk_options, text="🗂 Bulk on visible",
+            bulk_options, text="🗂 对可见行批量",
             font=("Segoe UI Semibold", 11),
         ))
         self.bulk_replace_filtered_btn = ctk.CTkButton(
-            bulk_options, text="🔁 Sound",
+            bulk_options, text="🔁 音效",
             command=self.replace_sound_in_filtered, width=110,
         )
         bulk_options.add(self.bulk_replace_filtered_btn)
         self.bulk_volume_filtered_btn = ctk.CTkButton(
-            bulk_options, text="🔊 Volume",
+            bulk_options, text="🔊 音量",
             command=self.set_volume_in_filtered, width=110,
         )
         bulk_options.add(self.bulk_volume_filtered_btn)
         self.bulk_mute_filtered_btn = ctk.CTkButton(
-            bulk_options, text="🔇 Mute", command=self.mute_filtered,
+            bulk_options, text="🔇 静音", command=self.mute_filtered,
             width=90, fg_color="#5b3a0c",
         )
         bulk_options.add(self.bulk_mute_filtered_btn)
         self.bulk_unmute_filtered_btn = ctk.CTkButton(
-            bulk_options, text="🔈 Un-mute", command=self.unmute_filtered, width=110,
+            bulk_options, text="🔈 取消静音", command=self.unmute_filtered, width=110,
         )
         bulk_options.add(self.bulk_unmute_filtered_btn)
         # Health cluster — visually separated by a label.
         bulk_options.add(ctk.CTkLabel(
-            bulk_options, text="    🩺 Health",
+            bulk_options, text="    🩺 健康检查",
             font=("Segoe UI Semibold", 11),
         ))
         self.verify_sounds_btn = ctk.CTkButton(
-            bulk_options, text="Verify & Fix",
+            bulk_options, text="校验并修复",
             command=self.verify_and_fix_sounds, width=130,
         )
         bulk_options.add(self.verify_sounds_btn)
         self.unique_sounds_btn = ctk.CTkButton(
-            bulk_options, text="🎲 Make Unique",
+            bulk_options, text="🎲 音效去重",
             command=self.make_sounds_unique, width=140,
         )
         bulk_options.add(self.unique_sounds_btn)
@@ -638,40 +649,40 @@ class FilterSoundEditor:
         color_options = FlowBar(tab_edit, corner_radius=12)
         color_options.pack(fill="x", padx=6, pady=(2, 6))
         color_options.add(ctk.CTkLabel(
-            color_options, text="🎨 Selected item",
+            color_options, text="🎨 选中物品",
             font=("Segoe UI Semibold", 11),
         ))
         self.edit_colors_button = ctk.CTkButton(
-            color_options, text="🎨 Edit Colors…", command=self.edit_colors, width=140,
+            color_options, text="🎨 编辑颜色…", command=self.edit_colors, width=140,
         )
         color_options.add(self.edit_colors_button)
         self.replace_button = ctk.CTkButton(
-            color_options, text="🔁 Replace Sound…",
+            color_options, text="🔁 替换音效…",
             command=self.replace_sound, width=160,
         )
         color_options.add(self.replace_button)
         self.volume_button = ctk.CTkButton(
-            color_options, text="🔊 Volume…", command=self.change_volume, width=120,
+            color_options, text="🔊 音量…", command=self.change_volume, width=120,
         )
         color_options.add(self.volume_button)
         self.preview_item_button = ctk.CTkButton(
-            color_options, text="👁 Preview Item",
+            color_options, text="👁 预览物品",
             command=self.preview_item_colors, width=140,
         )
         color_options.add(self.preview_item_button)
         # Less-used color clipboard buttons are reachable via right-click;
         # keep direct buttons for keyboard-only / no-multi-select users.
         self.copy_colors_button = ctk.CTkButton(
-            color_options, text="🖌 Copy", command=self.copy_colors, width=80,
+            color_options, text="🖌 复制", command=self.copy_colors, width=80,
         )
         color_options.add(self.copy_colors_button)
         self.paste_colors_button = ctk.CTkButton(
-            color_options, text="📋 Paste",
+            color_options, text="📋 粘贴",
             command=self.paste_colors, width=80, state="disabled",
         )
         color_options.add(self.paste_colors_button)
         self.remove_colors_button = ctk.CTkButton(
-            color_options, text="🗑 Remove", command=self.remove_colors,
+            color_options, text="🗑 移除", command=self.remove_colors,
             width=100, fg_color="darkred",
         )
         color_options.add(self.remove_colors_button)
@@ -679,13 +690,13 @@ class FilterSoundEditor:
         # ---------- Status bar with health indicator ----------
         status_bar = ctk.CTkFrame(tab_edit, corner_radius=0, fg_color="transparent")
         status_bar.pack(fill="x", padx=8, pady=(4, 4))
-        self.status = ctk.CTkLabel(status_bar, text=f"Ready • {APP_NAME} v{APP_VERSION}", anchor="w")
+        self.status = ctk.CTkLabel(status_bar, text=f"就绪 • {APP_NAME} v{APP_VERSION}", anchor="w")
         self.status.pack(side="left", fill="x", expand=True)
         # The health indicator is a clickable pill: ✓ when healthy, ⚠ when broken refs, — when idle.
         # Clicking opens Verify & Fix. It updates after every load/refresh and after every save.
         self.health_indicator = ctk.CTkButton(
             status_bar,
-            text="—  no filter loaded",
+            text="—  未加载过滤器",
             command=self.verify_and_fix_sounds,
             width=220,
             height=24,
@@ -729,7 +740,7 @@ class FilterSoundEditor:
             log.exception("Item Visibility tab failed to initialize")
             ctk.CTkLabel(
                 tab_visibility,
-                text=f"Item Visibility tab unavailable:\n{e}",
+                text=f"物品显隐页签不可用：\n{e}",
                 justify="left",
             ).pack(padx=20, pady=20)
 
@@ -774,7 +785,7 @@ class FilterSoundEditor:
         if n == 0:
             self.selection_counter.configure(text="")
         elif n == 1:
-            self.selection_counter.configure(text="1 selected")
+            self.selection_counter.configure(text="已选 1 项")
         else:
             self.selection_counter.configure(text=f"{n} selected")
 
@@ -784,19 +795,21 @@ class FilterSoundEditor:
 
     def change_theme(self, palette_name):
         """Live-switch the color palette and persist the choice."""
+        palette_name = palette_value(palette_name)
         self.settings.theme_palette = palette_name
         self.theme_manager.apply(palette_name, self.settings.appearance_mode)
         self._persist_settings()
-        self._set_status(f"Theme: {palette_name}")
+        self._set_status(f"配色主题：{palette_label(palette_name)}")
 
     def change_appearance_mode(self, mode):
         """Light / Dark / System — applies live via CTk."""
+        mode = appearance_value(mode)
         if mode not in ("Light", "Dark", "System"):
             return
         self.settings.appearance_mode = mode
         self.theme_manager.apply(self.settings.theme_palette, mode)
         self._persist_settings()
-        self._set_status(f"Appearance: {mode}")
+        self._set_status(f"外观模式：{appearance_label(mode)}")
 
     def _persist_settings(self):
         try:
@@ -973,20 +986,20 @@ class FilterSoundEditor:
 
         # ----- File -----
         file_menu = tk.Menu(menubar, tearoff=False)
-        file_menu.add_command(label="Open Filter…", accelerator="Ctrl+O", command=self.load_filter)
-        file_menu.add_command(label="Save", accelerator="Ctrl+S", command=self.save_filter)
-        file_menu.add_command(label="Save As…", command=self.save_filter_as)
-        file_menu.add_command(label="Reload from disk", accelerator="F5", command=self._reload_current_filter)
+        file_menu.add_command(label="打开过滤器…", accelerator="Ctrl+O", command=self.load_filter)
+        file_menu.add_command(label="保存", accelerator="Ctrl+S", command=self.save_filter)
+        file_menu.add_command(label="另存为…", command=self.save_filter_as)
+        file_menu.add_command(label="从磁盘重新加载", accelerator="F5", command=self._reload_current_filter)
         file_menu.add_separator()
         self._recent_menu = tk.Menu(file_menu, tearoff=False)
-        file_menu.add_cascade(label="Recent Filters", menu=self._recent_menu)
+        file_menu.add_cascade(label="最近打开", menu=self._recent_menu)
         self._rebuild_recent_menu()
         file_menu.add_separator()
-        file_menu.add_command(label="Open POE2 Filter Folder", command=self.open_poe2_folder)
-        file_menu.add_command(label="Open Current Filter Folder", command=self.open_current_filter_folder)
+        file_menu.add_command(label="打开流放2过滤器目录", command=self.open_poe2_folder)
+        file_menu.add_command(label="打开当前过滤器目录", command=self.open_current_filter_folder)
         file_menu.add_separator()
-        file_menu.add_command(label="Quit", accelerator="Ctrl+Q", command=self._on_close)
-        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="退出", accelerator="Ctrl+Q", command=self._on_close)
+        menubar.add_cascade(label="文件", menu=file_menu)
 
         # ----- View -----
         view_menu = tk.Menu(menubar, tearoff=False)
@@ -994,70 +1007,70 @@ class FilterSoundEditor:
         appearance_menu = tk.Menu(view_menu, tearoff=False)
         for mode in ("System", "Light", "Dark"):
             appearance_menu.add_command(label=mode, command=lambda m=mode: self.change_appearance_mode(m))
-        view_menu.add_cascade(label="Appearance Mode", menu=appearance_menu)
+        view_menu.add_cascade(label="外观模式", menu=appearance_menu)
 
         theme_menu = tk.Menu(view_menu, tearoff=False)
         for name in palette_names():
             theme_menu.add_command(label=name, command=lambda n=name: self.change_theme(n))
-        view_menu.add_cascade(label="Color Theme", menu=theme_menu)
+        view_menu.add_cascade(label="配色主题", menu=theme_menu)
 
         view_menu.add_separator()
-        view_menu.add_command(label="Toggle Show-only-with-sound",
+        view_menu.add_command(label="切换：仅显示有音效的行",
                               command=lambda: (self.hide_no_sound_var.set(not self.hide_no_sound_var.get()), self.apply_filter()))
-        menubar.add_cascade(label="View", menu=view_menu)
+        menubar.add_cascade(label="视图", menu=view_menu)
 
         # ----- Sounds ----- (everything about drop sounds lives here)
         sounds_menu = tk.Menu(menubar, tearoff=False)
-        sounds_menu.add_command(label="Set Tier Sounds…", command=self.open_tier_sounds)
-        sounds_menu.add_command(label="Sound File Manager…", command=self.open_sound_manager)
+        sounds_menu.add_command(label="按档次设置音效…", command=self.open_tier_sounds)
+        sounds_menu.add_command(label="音效文件管理…", command=self.open_sound_manager)
         sounds_menu.add_separator()
-        sounds_menu.add_command(label="Verify & Fix Sounds…", accelerator="Ctrl+H", command=self.verify_and_fix_sounds)
-        sounds_menu.add_command(label="Make Sounds Unique…", accelerator="Ctrl+U", command=self.make_sounds_unique)
-        menubar.add_cascade(label="Sounds", menu=sounds_menu)
+        sounds_menu.add_command(label="校验并修复音效…", accelerator="Ctrl+H", command=self.verify_and_fix_sounds)
+        sounds_menu.add_command(label="音效去重…", accelerator="Ctrl+U", command=self.make_sounds_unique)
+        menubar.add_cascade(label="音效", menu=sounds_menu)
 
         # ----- Visuals & Tiers ----- (colours, effects, economy tiers)
         visuals_menu = tk.Menu(menubar, tearoff=False)
-        visuals_menu.add_command(label="Economy Tier Visuals…", command=self.open_economy_tier_visuals)
+        visuals_menu.add_command(label="经济档次视觉…", command=self.open_economy_tier_visuals)
         visuals_menu.add_separator()
-        visuals_menu.add_command(label="Emphasize by Tier…", command=self.emphasize_by_tier)
-        visuals_menu.add_command(label="Randomize Visuals…", command=self.randomize_visuals)
+        visuals_menu.add_command(label="按档次强化…", command=self.emphasize_by_tier)
+        visuals_menu.add_command(label="随机视觉…", command=self.randomize_visuals)
         visuals_menu.add_separator()
-        visuals_menu.add_command(label="Add / Update Chance Orb Items…",
+        visuals_menu.add_command(label="添加/更新机会石物品…",
                                   command=self.add_chance_orb_valuables)
-        menubar.add_cascade(label="Visuals & Tiers", menu=visuals_menu)
+        menubar.add_cascade(label="视觉与档次", menu=visuals_menu)
 
         # ----- Filter Health ----- (check & inspect the filter itself)
         health_menu = tk.Menu(menubar, tearoff=False)
-        health_menu.add_command(label="Check Filter Compatibility…", command=self.check_filter_compatibility)
-        health_menu.add_command(label="Filter Statistics…", command=self.show_filter_statistics)
-        menubar.add_cascade(label="Filter Health", menu=health_menu)
+        health_menu.add_command(label="检查过滤器兼容性…", command=self.check_filter_compatibility)
+        health_menu.add_command(label="过滤器统计…", command=self.show_filter_statistics)
+        menubar.add_cascade(label="过滤器健康", menu=health_menu)
 
         # ----- Settings ----- (top-level so it's easy to find)
         settings_menu = tk.Menu(menubar, tearoff=False)
-        settings_menu.add_command(label="Settings…", accelerator="Ctrl+,", command=self.open_settings_dialog)
-        menubar.add_cascade(label="Settings", menu=settings_menu)
+        settings_menu.add_command(label="设置…", accelerator="Ctrl+,", command=self.open_settings_dialog)
+        menubar.add_cascade(label="设置", menu=settings_menu)
 
         # ----- Help -----
         help_menu = tk.Menu(menubar, tearoff=False)
-        help_menu.add_command(label="How to Use…", command=self.show_how_to_use_dialog)
+        help_menu.add_command(label="使用说明…", command=self.show_how_to_use_dialog)
         help_menu.add_separator()
-        help_menu.add_command(label="POE2 Filter Syntax (web)",
+        help_menu.add_command(label="流放2过滤器语法（网页）",
                               command=lambda: webbrowser.open("https://www.pathofexile.com/forum/view-thread/3683711"))
-        help_menu.add_command(label="FilterBlade Editor (web)",
+        help_menu.add_command(label="FilterBlade 编辑器（网页）",
                               command=lambda: webbrowser.open("https://www.filterblade.xyz/?game=Poe2"))
         help_menu.add_separator()
-        help_menu.add_command(label="Open Debug Log", command=self.open_debug_log)
-        help_menu.add_command(label="Open Log Folder", command=self.open_log_folder)
+        help_menu.add_command(label="打开调试日志", command=self.open_debug_log)
+        help_menu.add_command(label="打开日志目录", command=self.open_log_folder)
         help_menu.add_separator()
-        help_menu.add_command(label=f"About {APP_NAME}", accelerator="F1", command=self.show_about_dialog)
-        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label=f"关于 {APP_NAME}", accelerator="F1", command=self.show_about_dialog)
+        menubar.add_cascade(label="帮助", menu=help_menu)
 
         self.root.config(menu=menubar)
 
     def _rebuild_recent_menu(self):
         self._recent_menu.delete(0, "end")
         if not self.settings.recent_files:
-            self._recent_menu.add_command(label="(empty)", state="disabled")
+            self._recent_menu.add_command(label="（空）", state="disabled")
             return
         for i, p in enumerate(self.settings.recent_files):
             short = p if len(p) < 64 else "…" + p[-60:]
@@ -1066,7 +1079,7 @@ class FilterSoundEditor:
                 command=lambda pp=p: self.load_filter_from_recent(pp),
             )
         self._recent_menu.add_separator()
-        self._recent_menu.add_command(label="Clear Recent",
+        self._recent_menu.add_command(label="清空最近记录",
                                        command=lambda: (setattr(self.settings, 'recent_files', []),
                                                          self._persist_settings(), self._rebuild_recent_menu()))
 
@@ -1118,14 +1131,14 @@ class FilterSoundEditor:
 
     def _reload_current_filter(self):
         if not self.filter_path or not os.path.isfile(self.filter_path):
-            self._set_status("Nothing to reload.")
+            self._set_status("没有可重新加载的内容。")
             return
         self.load_filter_from_path(self.filter_path)
-        self._set_status(f"Reloaded {os.path.basename(self.filter_path)}")
+        self._set_status(f"已重新加载 {os.path.basename(self.filter_path)}")
 
     def save_filter_as(self):
         if not self.lines:
-            messagebox.showinfo("Nothing to save", "Load or build a filter first.")
+            messagebox.showinfo("没有可保存的内容", "请先加载或新建一个过滤器。")
             return
         path = filedialog.asksaveasfilename(
             defaultextension=".filter",
@@ -1141,14 +1154,14 @@ class FilterSoundEditor:
             self.settings.add_recent(path)
             self._persist_settings()
             self._rebuild_recent_menu()
-            self._set_status(f"Saved as {path}")
+            self._set_status(f"已另存为 {path}")
         except Exception as e:
-            messagebox.showerror("Save error", str(e))
+            messagebox.showerror("保存失败", str(e))
 
     def load_filter_from_recent(self, path):
         """Load a recent file path without showing a file dialog."""
         if not os.path.isfile(path):
-            messagebox.showwarning("Not found", f"This file no longer exists:\n{path}")
+            messagebox.showwarning("未找到", f"This file no longer exists:\n{path}")
             try:
                 self.settings.recent_files.remove(path)
                 self._persist_settings()
@@ -1164,13 +1177,13 @@ class FilterSoundEditor:
     def open_poe2_folder(self):
         p = get_poe2_filter_directory()
         if not p:
-            messagebox.showinfo("POE2 folder", "Couldn't auto-detect the POE2 filter folder on this system.")
+            messagebox.showinfo("流放2目录", "无法自动定位本机的流放2过滤器目录。")
             return
         self._open_folder(p)
 
     def open_current_filter_folder(self):
         if not self.filter_path:
-            messagebox.showinfo("No filter", "Load a filter file first.")
+            messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
             return
         self._open_folder(os.path.dirname(self.filter_path))
 
@@ -1183,7 +1196,7 @@ class FilterSoundEditor:
             else:
                 subprocess.Popen(["xdg-open", path])
         except Exception as e:
-            messagebox.showerror("Open folder failed", str(e))
+            messagebox.showerror("打开目录失败", str(e))
 
     # ---------------- I/O (refactored to use core modules) ---------------- #
     def load_filter(self):
@@ -1198,12 +1211,12 @@ class FilterSoundEditor:
             log.info("Read %d lines from %s", len(self.lines), path)
             self._snapshot_on_load(self.filter_path)
             self.file_label.configure(text=os.path.basename(self.filter_path))
-            self._set_status(f"Loaded: {self.filter_path}")
+            self._set_status(f"已加载：{self.filter_path}")
             self.refresh_filter_data()
         except Exception as e:
             log.exception("load_filter failed for %s", path)
-            messagebox.showerror("Load Error", f"Failed to load filter:\n{e}")
-            self._set_status(f"Error loading file")
+            messagebox.showerror("加载失败", f"Failed to load filter:\n{e}")
+            self._set_status(f"加载文件出错")
             return
 
         if self.settings.auto_check_compatibility:
@@ -1218,10 +1231,10 @@ class FilterSoundEditor:
                  self.filter_path, len(self.lines), self.settings.create_backups)
         try:
             save_filter_file(self.filter_path, self.lines, create_backup=self.settings.create_backups, max_backups=self.settings.max_backups)
-            self._set_status("Saved with automatic backup")
+            self._set_status("已保存（含自动备份）")
         except Exception as e:
             log.exception("save_filter failed for %s", self.filter_path)
-            messagebox.showerror("Save Error", f"Failed to save filter:\n{e}")
+            messagebox.showerror("保存失败", f"Failed to save filter:\n{e}")
             return
 
         # Verify-on-save: silently scan and update the health indicator.
@@ -1392,7 +1405,7 @@ class FilterSoundEditor:
                 block_ov = ov.block_overrides.get(sig)
                 if block_ov and block_ov.tier is not None:
                     effective_tier = block_ov.tier
-            tier_label = effective_tier.name.title() if effective_tier != ValueTier.HIDDEN else "Hidden"
+            tier_label = tier_zh(effective_tier.name.title()) if effective_tier != ValueTier.HIDDEN else "隐藏"
         except Exception:
             tier_label = ""
 
@@ -1507,10 +1520,10 @@ class FilterSoundEditor:
             tag = "oddrow" if idx % 2 else "evenrow"
             self.tree.insert("", "end", values=(
                 entry.get("category", ""),
-                entry.get("item", "") or "(no criteria)",
+                entry.get("item", "") or "（无条件）",
                 entry.get("tier_label", ""),
-                entry["rarity"],
-                entry["stype"],
+                rarity_display(entry["rarity"]),
+                sound_type_label(entry["stype"]),
                 entry["sound"],
                 volume_display,
                 effect_short,
@@ -1528,6 +1541,7 @@ class FilterSoundEditor:
     # alphabetically. Hidden lands at the bottom regardless of direction.
     _TIER_SORT_RANK = {
         "Mythic": 0, "Top": 1, "High": 2, "Mid": 3, "Low": 4, "Junk": 5, "Hidden": 6,
+        "神话": 0, "顶级": 1, "高档": 2, "中档": 3, "低档": 4, "垃圾": 5, "隐藏": 6,
         "": 7,
     }
 
@@ -1575,51 +1589,51 @@ class FilterSoundEditor:
 
     # ===== Smart curated groups (logical supersets of sections) =====
     SMART_GROUPS = [
-        ("All Currency", [
+        ("全部通货", [
             "Currency - Exceptions - Leveling Currencies",
             "Currency - Regular Currency Tiering",
             "Currency - SPECIAL",
             "Remaining Currency",
         ]),
-        ("All Waystones / Maps", [
+        ("全部引路石 / 地图", [
             "Waystones",
             "Normal Waystone Progression",
             "Misc Map Like",
             "Misc Map Items",
             "Splinters, Tablets, Fragments",
         ]),
-        ("All Gear (Endgame)", [
+        ("全部装备（终局）", [
             "Normal and Magic Items: Endgame",
             "Endgame - Rare - Jewellery",
             "Endgame - Rare - Gear",
             "Untiered Rare Catcher",
             "Rare Item Decorators",
         ]),
-        ("All Uniques & Exotics", [
+        ("全部传奇与特殊物品", [
             "Uniques",
             "Exotic Bases",
             "Exceptional Items",
             "IDENTIFIED MODS: RECOMBINATOR MODS",
         ]),
-        ("All Sockets / Gems / Jewels", [
+        ("全部插槽 / 技能宝石 / 珠宝", [
             "Socketables - Runes and Soul Cores",
             "Gems and Uncut Gems",
             "Jewels",
             "Relics",
         ]),
-        ("All Flasks & Charms", [
+        ("全部药剂与咒符", [
             "Endgame Flasks",
             "Endgame Charms",
             "Leveling - Life Mana Flasks",
         ]),
-        ("All Leveling", [
+        ("全部开荒物品", [
             "Leveling - Salvagable",
             "Leveling - Hide outdated leveling flasks",
             "Leveling - Life Mana Flasks",
             "Leveling - Rules",
             "Leveling - Useful magic and normal items",
         ]),
-        ("All Hide Rules", [
+        ("全部隐藏规则", [
             "Normal, Magic, Rare Hiding Rules",
             "Hide Layer 1 - Normal and Magic Endgame Gear",
             "Hide Layer 2 - Rare Gear",
@@ -1655,20 +1669,20 @@ class FilterSoundEditor:
 
         # ---------- Root: All Categories ----------
         all_w, all_t = self._count_pair(self.filter_data)
-        all_iid = self.cat_tree.insert("", "end", text=f"★  All Categories   ({all_w}/{all_t})", open=True)
+        all_iid = self.cat_tree.insert("", "end", text=f"★  全部分类   ({all_w}/{all_t})", open=True)
         self._cat_filters[all_iid] = ("all", lambda e: True)
 
         # ---------- Sound state ----------
-        sound_header = self.cat_tree.insert("", "end", text="Sound State", tags=("group_header",), open=True)
+        sound_header = self.cat_tree.insert("", "end", text="音效状态", tags=("group_header",), open=True)
         self._cat_filters[sound_header] = ("noop", None)
         with_sound_entries = [e for e in self.filter_data if e.get("stype") != "None"]
         without_sound_entries = [e for e in self.filter_data if e.get("stype") == "None"]
         ws_iid = self.cat_tree.insert(sound_header, "end",
-                                       text=f"🔊 With Sound   ({len(with_sound_entries)})",
+                                       text=f"🔊 有音效   ({len(with_sound_entries)})",
                                        tags=("smart",))
         self._cat_filters[ws_iid] = ("with_sound", lambda e: e.get("stype") != "None")
         wos_iid = self.cat_tree.insert(sound_header, "end",
-                                        text=f"🔇 Without Sound   ({len(without_sound_entries)})",
+                                        text=f"🔇 无音效   ({len(without_sound_entries)})",
                                         tags=("smart",))
         self._cat_filters[wos_iid] = ("without_sound", lambda e: e.get("stype") == "None")
 
@@ -1676,7 +1690,7 @@ class FilterSoundEditor:
         commented = [e for e in self.filter_data if e.get("commented")]
         if commented:
             cm_iid = self.cat_tree.insert(sound_header, "end",
-                                           text=f"#  Disabled (commented)   ({len(commented)})",
+                                           text=f"#  已禁用（已注释）   ({len(commented)})",
                                            tags=("smart", "muted"))
             self._cat_filters[cm_iid] = ("commented", lambda e: bool(e.get("commented")))
 
@@ -1691,13 +1705,13 @@ class FilterSoundEditor:
                 if e.get("basetypes_lower") and (e["basetypes_lower"] & chance_bases_lower)
             ]
             chase_header = self.cat_tree.insert(
-                "", "end", text="Chase Targets", tags=("group_header",), open=True,
+                "", "end", text="目标物品", tags=("group_header",), open=True,
             )
             self._cat_filters[chase_header] = ("noop", None)
             chance_w, chance_t = self._count_pair(chance_entries)
             chance_iid = self.cat_tree.insert(
                 chase_header, "end",
-                text=f"💎 CHANCE ORB ITEMS   ({chance_w}/{chance_t})",
+                text=f"💎 机会石物品   ({chance_w}/{chance_t})",
                 tags=("smart",),
             )
             self._cat_filters[chance_iid] = (
@@ -1708,7 +1722,7 @@ class FilterSoundEditor:
             )
 
         # ---------- Smart groups ----------
-        smart_header = self.cat_tree.insert("", "end", text="Smart Groups", tags=("group_header",), open=True)
+        smart_header = self.cat_tree.insert("", "end", text="智能分组", tags=("group_header",), open=True)
         self._cat_filters[smart_header] = ("noop", None)
         for label, section_list in self.SMART_GROUPS:
             entries = [e for e in self.filter_data if e.get("category") in set(section_list)]
@@ -1721,7 +1735,7 @@ class FilterSoundEditor:
             self._cat_filters[iid] = (f"smart:{label}", predicate_for_group(section_list))
 
         # ---------- Sections (raw, in document order) with subsections ----------
-        sections_header = self.cat_tree.insert("", "end", text="Sections", tags=("group_header",), open=True)
+        sections_header = self.cat_tree.insert("", "end", text="章节", tags=("group_header",), open=True)
         self._cat_filters[sections_header] = ("noop", None)
         for section_name in sections:
             sec_entries = [e for e in self.filter_data if e.get("category") == section_name]
@@ -1755,7 +1769,7 @@ class FilterSoundEditor:
                 types_in_section.setdefault(bt, []).append(e)
             if len(types_in_section) >= 2:
                 types_header = self.cat_tree.insert(sec_iid, "end",
-                                                     text="(by $type->)", tags=("muted",))
+                                                     text="（按 $type->）", tags=("muted",))
                 self._cat_filters[types_header] = ("noop", None)
                 for bt, ts_entries in sorted(types_in_section.items(), key=lambda kv: (-len(kv[1]), kv[0])):
                     tw, tt = self._count_pair(ts_entries)
@@ -1770,7 +1784,7 @@ class FilterSoundEditor:
 
         # Update sidebar summary
         try:
-            self.sidebar_count_label.configure(text=f"{len(sections)} sections")
+            self.sidebar_count_label.configure(text=f"{len(sections)} 个章节")
         except Exception:
             pass
 
@@ -1835,7 +1849,7 @@ class FilterSoundEditor:
         visible = len(self.tree.get_children())
         w, t = self._count_pair(self.filtered_data)
         scope = f"[{scope_label}] " if scope_label and scope_label != "★  All Categories" else ""
-        self._set_status(f"{scope}{visible} visible rows • {w} with sound / {t} total")
+        self._set_status(f"{scope}{visible} 行可见 • {w} 行有音效 / 共 {t} 行")
 
     def _get_selected_entry(self):
         selected = self.tree.focus()
@@ -1914,21 +1928,21 @@ class FilterSoundEditor:
     def _build_tree_context_menu(self):
         from features.visual_emphasis import ValueTier
         menu = tk.Menu(self.tree, tearoff=False)
-        menu.add_command(label="Replace / Add Sound…",
+        menu.add_command(label="替换/添加音效…",
                          command=self._ctx_replace_sound)
-        menu.add_command(label="Change Volume…",
+        menu.add_command(label="修改音量…",
                          command=self._ctx_change_volume)
-        menu.add_command(label="Mute (comment out sound)",
+        menu.add_command(label="静音（注释掉音效）",
                          command=lambda: self._ctx_set_mute(True))
-        menu.add_command(label="Un-mute",
+        menu.add_command(label="取消静音",
                          command=lambda: self._ctx_set_mute(False))
-        menu.add_command(label="Preview Item",
+        menu.add_command(label="预览物品",
                          command=self.preview_selected)
         menu.add_separator()
-        menu.add_command(label="Edit Colors…", command=self.edit_colors)
-        menu.add_command(label="Copy Colors", command=self.copy_colors)
-        menu.add_command(label="Paste Colors", command=self._ctx_paste_colors)
-        menu.add_command(label="Remove Colors", command=self._ctx_remove_colors)
+        menu.add_command(label="编辑颜色…", command=self.edit_colors)
+        menu.add_command(label="复制颜色", command=self.copy_colors)
+        menu.add_command(label="粘贴颜色", command=self._ctx_paste_colors)
+        menu.add_command(label="移除颜色", command=self._ctx_remove_colors)
         menu.add_separator()
 
         tier_menu = tk.Menu(menu, tearoff=False)
@@ -1942,13 +1956,13 @@ class FilterSoundEditor:
         ]
         for tier, label in tier_specs:
             tier_menu.add_command(
-                label=f"Move to {label}",
+                label=f"移动到 {label}",
                 command=lambda t=tier: self._ctx_move_to_tier(t),
             )
         tier_menu.add_separator()
-        tier_menu.add_command(label="Reset tier override",
+        tier_menu.add_command(label="重置档次覆盖",
                               command=lambda: self._ctx_move_to_tier(None))
-        menu.add_cascade(label="Move to Tier ▶", menu=tier_menu)
+        menu.add_cascade(label="移动到档次 ▶", menu=tier_menu)
         return menu
 
     # -------- Context-menu action handlers (selection-aware wrappers) -------- #
@@ -1972,7 +1986,7 @@ class FilterSoundEditor:
         try:
             copy_sound_file(new_sound_path, dest_dir)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to copy sound file: {e}")
+            messagebox.showerror("错误", f"Failed to copy sound file: {e}")
             return
 
         touched = 0
@@ -1984,7 +1998,7 @@ class FilterSoundEditor:
             touched += 1
 
         self.save_filter()
-        self._set_status(f"Applied '{new_filename}' to {touched} selected block(s)")
+        self._set_status(f"已把「{new_filename}」应用到 {touched} 个选中块")
         self.refresh_filter_data()
 
     def _rewrite_sound_in_block(self, entry, new_filename):
@@ -2012,7 +2026,7 @@ class FilterSoundEditor:
     def _ctx_change_volume(self):
         entries = [e for e in self._get_selected_entries() if e["stype"] != "None"]
         if not entries:
-            messagebox.showinfo("No sound", "None of the selected rows have a sound.")
+            messagebox.showinfo("无音效", "选中的行都没有音效。")
             return
         new_vol = simpledialog.askinteger(
             "Volume",
@@ -2024,7 +2038,7 @@ class FilterSoundEditor:
         for entry in entries:
             self._set_block_volume(entry, new_vol)
         self.save_filter()
-        self._set_status(f"Volume set to {new_vol} on {len(entries)} block(s)")
+        self._set_status(f"已把 {len(entries)} 个块的音量设为 {new_vol}")
         self.refresh_filter_data()
 
     def _set_block_volume(self, entry, new_vol):
@@ -2050,21 +2064,21 @@ class FilterSoundEditor:
     def _ctx_set_mute(self, mute: bool):
         entries = [e for e in self._get_selected_entries() if e["stype"] != "None"]
         if not entries:
-            messagebox.showinfo("Nothing to (un)mute",
+            messagebox.showinfo("没有可静音/取消静音的项",
                                 "Select at least one row that has a sound.")
             return
         eligible = [e for e in entries
                     if (mute and not e.get("commented"))
                     or (not mute and e.get("commented"))]
         if not eligible:
-            messagebox.showinfo("Nothing to change",
+            messagebox.showinfo("没有可修改的内容",
                                 f"All selected rows are already {'muted' if mute else 'un-muted'}.")
             return
         for entry in eligible:
             self._toggle_block_mute(entry, mute)
         self.save_filter()
         verb = "Muted" if mute else "Un-muted"
-        self._set_status(f"{verb} {len(eligible)} block(s)")
+        self._set_status(f"{verb} {len(eligible)} 个块")
         self.refresh_filter_data()
 
     def _toggle_block_mute(self, entry, mute: bool):
@@ -2101,7 +2115,7 @@ class FilterSoundEditor:
             self.paste_colors()
             return
         if not self.color_clipboard.has_colors():
-            messagebox.showinfo("Clipboard empty",
+            messagebox.showinfo("剪贴板为空",
                                 "Copy colors from a single block first.")
             return
         # Re-parse once, then paste to each matching block. paste_to_block
@@ -2121,12 +2135,12 @@ class FilterSoundEditor:
                 blocks_by_start = {b.start_idx: b for b in blocks}
         except Exception as e:
             log.exception("multi paste_colors failed")
-            messagebox.showerror("Paste error", str(e))
+            messagebox.showerror("粘贴失败", str(e))
             return
         if touched:
             self.save_filter()
             self.refresh_filter_data()
-            self._set_status(f"Pasted colors to {touched} block(s)")
+            self._set_status(f"已粘贴颜色到 {touched} 个块")
 
     def _ctx_remove_colors(self):
         entries = self._get_selected_entries()
@@ -2147,7 +2161,7 @@ class FilterSoundEditor:
         if touched:
             self.save_filter()
             self.refresh_filter_data()
-            self._set_status(f"Removed colors from {touched} block(s)")
+            self._set_status(f"已从 {touched} 个块移除颜色")
 
     def _strip_color_lines_from_block(self, start_idx):
         b_start, b_end = self._block_bounds(start_idx)
@@ -2222,10 +2236,10 @@ class FilterSoundEditor:
         if touched_blocks:
             self.save_filter()
             self.refresh_filter_data()
-            label = "(reset)" if dest_tier is None else dest_tier.name
-            self._set_status(f"Moved {touched_blocks} block(s) → {label}")
+            label = "（已重置）" if dest_tier is None else dest_tier.name
+            self._set_status(f"已移动 {touched_blocks} 个块 → {label}")
         else:
-            self._set_status("Override updated (no styling rewrite needed)")
+            self._set_status("覆盖已更新（无需重写样式）")
 
     def display_context(self, event):
         selected = self.tree.focus()
@@ -2266,7 +2280,7 @@ class FilterSoundEditor:
     def replace_sound(self):
         sel = self._get_selected_entry()
         if not sel:
-            messagebox.showwarning("No Selection", "Please select a row first.")
+            messagebox.showwarning("未选择", "请先选择一行。")
             return
 
         new_sound_path = filedialog.askopenfilename(filetypes=[("Audio/Video Files", "*.wav *.ogg *.mp3 *.aac *.flac *.m4a *.wmv *.mp4 *.mkv *.webm *.opus")])
@@ -2280,7 +2294,7 @@ class FilterSoundEditor:
             # Use new core.file_operations.copy_sound_file
             dest_path = copy_sound_file(new_sound_path, dest_dir)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to copy sound file: {e}")
+            messagebox.showerror("错误", f"Failed to copy sound file: {e}")
             return
 
         # Rest of the logic remains the same
@@ -2337,7 +2351,7 @@ class FilterSoundEditor:
                 touched = 1
 
         if touched == 0:
-            messagebox.showinfo("No Changes", "Nothing to update.")
+            messagebox.showinfo("无改动", "没有需要更新的内容。")
             return
 
         try:
@@ -2345,18 +2359,18 @@ class FilterSoundEditor:
             self.last_changed_path = dest_path
             self.preview_changed_button.configure(state="normal")
             # (Removed redundant Success popup — status bar now reports: f"Applied sound to {touched} block(s).")
-            self._set_status(f"Applied '{new_filename}' to {touched} block(s)")
+            self._set_status(f"已把「{new_filename}」应用到 {touched} 个块")
             self.refresh_filter_data()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update filter: {e}")
+            messagebox.showerror("错误", f"Failed to update filter: {e}")
 
     def change_volume(self):
         sel = self._get_selected_entry()
         if not sel:
-            messagebox.showwarning("No Selection", "Please select a sound row to change volume.")
+            messagebox.showwarning("未选择", "请选择一条有音效的行来修改音量。")
             return
         if sel["stype"] == "None":
-            messagebox.showinfo("No sound", "This block has no sound yet. Use 'Replace / Add Sound…' to add one first.")
+            messagebox.showinfo("无音效", "该规则块还没有音效。请先用「替换/添加音效…」添加一个。")
             return
 
         new_vol = simpledialog.askinteger("Volume", "Enter new volume (0-300):", minvalue=0, maxvalue=300, parent=self.root)
@@ -2396,10 +2410,10 @@ class FilterSoundEditor:
         try:
             self.save_filter()
             # (Removed redundant Success popup — status bar now reports: f"Updated volume to {new_vol}.")
-            self._set_status(f"Updated volume to {new_vol}")
+            self._set_status(f"音量已更新为 {new_vol}")
             self.refresh_filter_data()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update filter: {e}")
+            messagebox.showerror("错误", f"Failed to update filter: {e}")
 
     # ================== Filtered-set bulk operations ================== #
     def _filtered_block_iter(self):
@@ -2414,10 +2428,10 @@ class FilterSoundEditor:
 
     def replace_sound_in_filtered(self):
         if not self.filter_path:
-            messagebox.showwarning("No filter", "Load a filter file first.")
+            messagebox.showwarning("未加载过滤器", "请先加载过滤器文件。")
             return
         if not self.filtered_data:
-            messagebox.showinfo("Nothing to replace", "The visible set is empty.")
+            messagebox.showinfo("没有可替换的内容", "当前可见集合为空。")
             return
 
         blocks = list(self._filtered_block_iter())
@@ -2442,7 +2456,7 @@ class FilterSoundEditor:
         try:
             dest_path = copy_sound_file(new_sound_path, dest_dir)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to copy sound file: {e}")
+            messagebox.showerror("错误", f"Failed to copy sound file: {e}")
             return
 
         # Process blocks in descending start_idx so any inserts don't shift earlier indices
@@ -2462,19 +2476,19 @@ class FilterSoundEditor:
             self.save_filter()
             self.last_changed_path = dest_path
             self.preview_changed_button.configure(state="normal")
-            self._set_status(f"Bulk-applied '{new_filename}' to {touched} block(s)")
+            self._set_status(f"已批量把「{new_filename}」应用到 {touched} 个块")
             # (Removed redundant Success popup — status bar now reports: f"Replaced sound in {touched} block(s).")
             self.refresh_filter_data()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update filter: {e}")
+            messagebox.showerror("错误", f"Failed to update filter: {e}")
 
     def set_volume_in_filtered(self):
         if not self.filter_path or not self.filtered_data:
-            messagebox.showinfo("Nothing to update", "No visible rows.")
+            messagebox.showinfo("没有可更新的内容", "没有可见的行。")
             return
         eligible = [e for e in self.filtered_data if e["stype"] != "None"]
         if not eligible:
-            messagebox.showinfo("No sound rows", "None of the visible rows have a sound.")
+            messagebox.showinfo("没有带音效的行", "可见行都没有音效。")
             return
 
         new_vol = simpledialog.askinteger(
@@ -2508,15 +2522,15 @@ class FilterSoundEditor:
                         touched += 1
         try:
             self.save_filter()
-            self._set_status(f"Set volume {new_vol} on {touched} sound line(s)")
+            self._set_status(f"已把 {touched} 条音效行的音量设为 {new_vol}")
             # (Removed redundant Success popup — status bar now reports: f"Updated volume on {touched} row(s).")
             self.refresh_filter_data()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update filter: {e}")
+            messagebox.showerror("错误", f"Failed to update filter: {e}")
 
     def _toggle_mute_filtered(self, mute):
         if not self.filter_path or not self.filtered_data:
-            messagebox.showinfo("Nothing to update", "No visible rows.")
+            messagebox.showinfo("没有可更新的内容", "没有可见的行。")
             return
         if mute:
             eligible = [e for e in self.filtered_data if e["stype"] != "None" and not e.get("commented")]
@@ -2565,11 +2579,11 @@ class FilterSoundEditor:
                 touched += 1
         try:
             self.save_filter()
-            self._set_status(f"{verb}d {touched} sound line(s)")
+            self._set_status(f"{verb} {touched} 条音效行")
             # (Removed redundant Success popup — status bar now reports: f"{verb}d {touched} row(s).")
             self.refresh_filter_data()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update filter: {e}")
+            messagebox.showerror("错误", f"Failed to update filter: {e}")
 
     def mute_filtered(self):
         self._toggle_mute_filtered(mute=True)
@@ -2610,7 +2624,7 @@ class FilterSoundEditor:
                 winsound.PlaySound(None, winsound.SND_PURGE)
             except Exception:
                 pass
-        self._set_status("Stopped")
+        self._set_status("已停止")
 
     def _play_with_vlc(self, path):
         try:
@@ -2622,7 +2636,7 @@ class FilterSoundEditor:
             media = self._vlc_instance.media_new(path)
             self._vlc_player.set_media(media)
             self._vlc_player.play()
-            self._set_status(f"Playing with VLC: {os.path.basename(path)}")
+            self._set_status(f"正在用 VLC 播放：{os.path.basename(path)}")
             return True
         except Exception:
             return False
@@ -2646,7 +2660,7 @@ class FilterSoundEditor:
                 return False
             _pygame.mixer.music.load(path)
             _pygame.mixer.music.play()
-            self._set_status(f"Playing with pygame: {os.path.basename(path)}")
+            self._set_status(f"正在用 pygame 播放：{os.path.basename(path)}")
             return True
         except Exception:
             return False
@@ -2658,7 +2672,7 @@ class FilterSoundEditor:
             AudioSegment, pydub_play = _pydub
             seg = AudioSegment.from_file(path)
             self._pydub_obj = pydub_play(seg)
-            self._set_status(f"Playing with pydub: {os.path.basename(path)}")
+            self._set_status(f"正在用 pydub 播放：{os.path.basename(path)}")
             return True
         except Exception:
             return False
@@ -2666,7 +2680,7 @@ class FilterSoundEditor:
     def _play_with_playsound(self, path):
         if not _playsound:
             return False
-        self._set_status(f"Playing with playsound: {os.path.basename(path)}")
+        self._set_status(f"正在用 playsound 播放：{os.path.basename(path)}")
         self._play_async(_playsound, path, True)
         return True
 
@@ -2691,7 +2705,7 @@ class FilterSoundEditor:
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 startupinfo=startupinfo, creationflags=creationflags
             )
-            self._set_status(f"Playing with ffplay: {os.path.basename(path)}")
+            self._set_status(f"正在用 ffplay 播放：{os.path.basename(path)}")
             return True
         except Exception:
             return False
@@ -2704,7 +2718,7 @@ class FilterSoundEditor:
             return False
         try:
             winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
-            self._set_status(f"Playing with winsound: {os.path.basename(path)}")
+            self._set_status(f"正在用 winsound 播放：{os.path.basename(path)}")
             return True
         except Exception:
             return False
@@ -2713,13 +2727,13 @@ class FilterSoundEditor:
         try:
             if os.name == "nt":
                 os.startfile(path)
-                self._set_status(f"Opened in default player: {os.path.basename(path)}")
+                self._set_status(f"已用系统默认播放器打开：{os.path.basename(path)}")
                 return True
             else:
                 opener = which("xdg-open") or which("open")
                 if opener:
                     subprocess.Popen([opener, path])
-                    self._set_status(f"Opened in default player: {os.path.basename(path)}")
+                    self._set_status(f"已用系统默认播放器打开：{os.path.basename(path)}")
                     return True
         except Exception:
             return False
@@ -2727,7 +2741,7 @@ class FilterSoundEditor:
 
     def _play_file(self, path):
         if not os.path.isfile(path):
-            messagebox.showwarning("Preview", f"File not found:\n{path}")
+            messagebox.showwarning("试听", f"File not found:\n{path}")
             return
         tried = [
             ("VLC", self._play_with_vlc),
@@ -2755,17 +2769,17 @@ class FilterSoundEditor:
 
     def preview_last_change(self):
         if not self.last_changed_path:
-            messagebox.showinfo("Preview", "No recent change to preview yet.")
+            messagebox.showinfo("试听", "还没有可试听的最近修改。")
             return
         self._play_file(self.last_changed_path)
 
     def preview_selected(self):
         sel = self._get_selected_entry()
         if not sel:
-            messagebox.showwarning("No Selection", "Please select a row first.")
+            messagebox.showwarning("未选择", "请先选择一行。")
             return
         if sel["stype"] != "Custom":
-            messagebox.showinfo("Preview", "Preview is only available for CustomAlertSound entries.")
+            messagebox.showinfo("试听", "只有使用自定义警报音效的条目可以试听。")
             return
         base = os.path.dirname(self.filter_path) if self.filter_path else os.getcwd()
         candidate = os.path.join(base, str(sel["sound"]))
@@ -2779,22 +2793,22 @@ class FilterSoundEditor:
 
         row1 = ctk.CTkFrame(merge_wrap)
         row1.pack(fill="x", pady=(0, 8))
-        self.merge_left_btn = ctk.CTkButton(row1, text="📂 Load LEFT filter", width=180, command=self._merge_load_left)
+        self.merge_left_btn = ctk.CTkButton(row1, text="📂 加载旧赛季过滤器", width=180, command=self._merge_load_left)
         self.merge_left_btn.pack(side="left", padx=(0, 8))
-        self.merge_left_label = ctk.CTkLabel(row1, text="No file selected")
+        self.merge_left_label = ctk.CTkLabel(row1, text="未选择文件")
         self.merge_left_label.pack(side="left")
 
         row2 = ctk.CTkFrame(merge_wrap)
         row2.pack(fill="x", pady=(0, 12))
-        self.merge_mid_btn = ctk.CTkButton(row2, text="📂 Load MIDDLE filter", width=180, command=self._merge_load_middle)
+        self.merge_mid_btn = ctk.CTkButton(row2, text="📂 加载新赛季过滤器", width=180, command=self._merge_load_middle)
         self.merge_mid_btn.pack(side="left", padx=(0, 8))
-        self.merge_mid_label = ctk.CTkLabel(row2, text="No file selected")
+        self.merge_mid_label = ctk.CTkLabel(row2, text="未选择文件")
         self.merge_mid_label.pack(side="left")
 
-        self.merge_go_btn = ctk.CTkButton(merge_wrap, text="🔧 Merge LEFT with MIDDLE sounds…", width=300, command=self._merge_and_save)
+        self.merge_go_btn = ctk.CTkButton(merge_wrap, text="🔧 把旧过滤器音效合并过来…", width=300, command=self._merge_and_save)
         self.merge_go_btn.pack(pady=(4, 8))
 
-        self.merge_info = ctk.CTkLabel(merge_wrap, text="Load both files to enable merge (Legacy exact-match mode).", justify="left")
+        self.merge_info = ctk.CTkLabel(merge_wrap, text="加载两个文件后才能合并（旧版精确匹配模式）。", justify="left")
         self.merge_info.pack(anchor="w")
 
     def _merge_load_left(self):
@@ -2815,7 +2829,7 @@ class FilterSoundEditor:
 
     def _update_merge_info(self):
         if not (self.merge_left_path and self.merge_middle_path):
-            self.merge_info.configure(text="Load both files to enable merge.")
+            self.merge_info.configure(text="加载两个文件后才能合并。")
             return
         try:
             with open(self.merge_left_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -2826,10 +2840,10 @@ class FilterSoundEditor:
             mid_blocks = self._collect_blocks(mid_lines)
             shared = len(set(left_blocks.keys()) & set(mid_blocks.keys()))
             self.merge_info.configure(
-                text=f"Ready. LEFT blocks: {len(left_blocks)} • MIDDLE blocks: {len(mid_blocks)} • Shared: {shared}"
+                text=f"就绪。旧过滤器规则块：{len(left_blocks)} • 新过滤器规则块：{len(mid_blocks)} • 共同：{shared}"
             )
         except Exception as e:
-            self.merge_info.configure(text=f"Error reading files: {e}")
+            self.merge_info.configure(text=f"读取文件失败：{e}")
 
     def _collect_blocks(self, lines):
         blocks = {}
@@ -2881,7 +2895,7 @@ class FilterSoundEditor:
 
     def _merge_and_save(self):
         if not (self.merge_left_path and self.merge_middle_path):
-            messagebox.showwarning("Merge", "Please load both LEFT and MIDDLE filter files.")
+            messagebox.showwarning("赛季迁移", "请同时加载旧赛季和新赛季两个过滤器文件。")
             return
         try:
             with open(self.merge_left_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -2962,10 +2976,10 @@ class FilterSoundEditor:
             with open(save_path, "w", encoding="utf-8") as out:
                 out.writelines(merged)
 
-            messagebox.showinfo("Merge complete", f"Merged file saved.\nBlocks updated: {replaced_blocks}\n\n{save_path}")
-            self._set_status(f"Merge completed • blocks updated: {replaced_blocks}")
+            messagebox.showinfo("合并完成", f"Merged file saved.\nBlocks updated: {replaced_blocks}\n\n{save_path}")
+            self._set_status(f"合并完成 • 更新块数：{replaced_blocks}")
         except Exception as e:
-            messagebox.showerror("Merge error", f"Unable to merge:\n{e}")
+            messagebox.showerror("合并失败", f"Unable to merge:\n{e}")
 
     # ==================== Color Editing Methods (Phase 2) ==================== #
 
@@ -2973,7 +2987,7 @@ class FilterSoundEditor:
         """Get the currently selected FilterBlock object."""
         selection = self.tree.selection()
         if not selection:
-            messagebox.showwarning("No selection", "Please select a row first.")
+            messagebox.showwarning("未选择", "请先选择一行。")
             return None
 
         iid = selection[0]
@@ -2982,11 +2996,11 @@ class FilterSoundEditor:
         try:
             idx = self.tree.index(iid)
         except Exception as e:
-            messagebox.showerror("Error", f"Could not get selection index: {e}")
+            messagebox.showerror("错误", f"Could not get selection index: {e}")
             return None
 
         if idx >= len(self.filtered_data):
-            messagebox.showerror("Error", "Invalid selection.")
+            messagebox.showerror("错误", "选择无效。")
             return None
 
         # Parse the current filter to get FilterBlock objects
@@ -3011,13 +3025,13 @@ class FilterSoundEditor:
             if block.rarity == rarity and context.startswith(block_context[:50]):
                 return block
 
-        messagebox.showerror("Error", "Could not find matching block.")
+        messagebox.showerror("错误", "找不到匹配的规则块。")
         return None
 
     def edit_colors(self):
         """Open color editor dialog for selected block."""
         if not self.filter_path or not self.lines:
-            messagebox.showwarning("No filter loaded", "Please load a filter file first.")
+            messagebox.showwarning("未加载过滤器", "请先加载过滤器文件。")
             return
 
         block = self._get_selected_block()
@@ -3030,7 +3044,7 @@ class FilterSoundEditor:
         frame = ctk.CTkFrame(menu_window)
         frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        ctk.CTkLabel(frame, text="Select color to edit:",
+        ctk.CTkLabel(frame, text="选择要编辑的颜色：",
                      font=("Segoe UI Semibold", 14)).pack(pady=(0, 15))
 
         # Get current colors
@@ -3039,7 +3053,7 @@ class FilterSoundEditor:
         def edit_text_color():
             dialog = ColorPickerDialog(
                 self.root,
-                title="Edit Text Color",
+                title="编辑文字颜色",
                 initial_color=current_colors.text_color,
                 callback=lambda color: self._apply_color(block, "text", color)
             )
@@ -3048,7 +3062,7 @@ class FilterSoundEditor:
         def edit_border_color():
             dialog = ColorPickerDialog(
                 self.root,
-                title="Edit Border Color",
+                title="编辑边框颜色",
                 initial_color=current_colors.border_color,
                 callback=lambda color: self._apply_color(block, "border", color)
             )
@@ -3057,18 +3071,18 @@ class FilterSoundEditor:
         def edit_background_color():
             dialog = ColorPickerDialog(
                 self.root,
-                title="Edit Background Color",
+                title="编辑背景颜色",
                 initial_color=current_colors.bg_color,
                 callback=lambda color: self._apply_color(block, "background", color)
             )
             menu_window.destroy()
 
-        ctk.CTkButton(frame, text="📝 Text Color", command=edit_text_color, width=250).pack(pady=5)
-        ctk.CTkButton(frame, text="🔲 Border Color", command=edit_border_color, width=250).pack(pady=5)
-        ctk.CTkButton(frame, text="🎨 Background Color", command=edit_background_color, width=250).pack(pady=5)
-        ctk.CTkButton(frame, text="Cancel", command=menu_window.destroy, width=250, fg_color="gray").pack(pady=(15, 0))
+        ctk.CTkButton(frame, text="📝 文字颜色", command=edit_text_color, width=250).pack(pady=5)
+        ctk.CTkButton(frame, text="🔲 边框颜色", command=edit_border_color, width=250).pack(pady=5)
+        ctk.CTkButton(frame, text="🎨 背景颜色", command=edit_background_color, width=250).pack(pady=5)
+        ctk.CTkButton(frame, text="取消", command=menu_window.destroy, width=250, fg_color="gray").pack(pady=(15, 0))
 
-        self._setup_dialog(menu_window, title="Edit Colors",
+        self._setup_dialog(menu_window, title="编辑颜色",
                            default_size=(380, 300), min_size=(340, 270),
                            allow_resize=False)
 
@@ -3088,11 +3102,11 @@ class FilterSoundEditor:
             # Reload the filter to reflect changes
             self.load_filter_from_path(self.filter_path)
 
-            self._set_status(f"Color updated: {color_type} = RGBA{rgba}")
+            self._set_status(f"颜色已更新：{color_type} = RGBA{rgba}")
             # (Removed redundant Success popup — status bar now reports: f"{color_type.capitalize()} color updated successfully!")
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to apply color:\n{e}")
+            messagebox.showerror("错误", f"Failed to apply color:\n{e}")
 
     def copy_colors(self):
         """Copy colors from selected block to clipboard."""
@@ -3104,15 +3118,15 @@ class FilterSoundEditor:
 
         if self.color_clipboard.has_colors():
             self.paste_colors_button.configure(state="normal")
-            self._set_status("Colors copied to clipboard")
+            self._set_status("颜色已复制到剪贴板")
             # (Removed redundant Success popup — status bar now reports: "Colors copied! Use 'Paste Colors' to apply to another block.")
         else:
-            messagebox.showwarning("No colors", "Selected block has no colors to copy.")
+            messagebox.showwarning("没有颜色", "选中的规则块没有可复制的颜色。")
 
     def paste_colors(self):
         """Paste colors from clipboard to selected block."""
         if not self.color_clipboard.has_colors():
-            messagebox.showwarning("Clipboard empty", "No colors in clipboard. Use 'Copy Colors' first.")
+            messagebox.showwarning("剪贴板为空", "剪贴板里没有颜色，请先「复制颜色」。")
             return
 
         block = self._get_selected_block()
@@ -3128,11 +3142,11 @@ class FilterSoundEditor:
             # Reload the filter
             self.load_filter_from_path(self.filter_path)
 
-            self._set_status("Colors pasted successfully")
+            self._set_status("颜色粘贴成功")
             # (Removed redundant Success popup — status bar now reports: "Colors pasted to selected block!")
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to paste colors:\n{e}")
+            messagebox.showerror("错误", f"Failed to paste colors:\n{e}")
 
     def preview_item_colors(self):
         """Show preview of how the item will appear in-game."""
@@ -3143,7 +3157,7 @@ class FilterSoundEditor:
         try:
             ItemPreviewDialog(self.root, block)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to show preview:\n{e}")
+            messagebox.showerror("错误", f"Failed to show preview:\n{e}")
 
     def remove_colors(self):
         """Remove all colors from selected block."""
@@ -3153,10 +3167,10 @@ class FilterSoundEditor:
 
         dialog = ConfirmDialog(
             self.root,
-            title="Confirm Removal",
+            title="确认移除",
             message="Remove all colors (text, border, background) from this block?",
-            confirm_text="Remove",
-            cancel_text="Cancel"
+            confirm_text="移除",
+            cancel_text="取消"
         )
 
         if dialog.get_result():
@@ -3171,11 +3185,11 @@ class FilterSoundEditor:
                 # Reload the filter
                 self.load_filter_from_path(self.filter_path)
 
-                self._set_status("All colors removed from block")
+                self._set_status("已移除该块的全部颜色")
                 # (Removed redundant Success popup — status bar now reports: "All colors removed from selected block!")
 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to remove colors:\n{e}")
+                messagebox.showerror("错误", f"Failed to remove colors:\n{e}")
 
     def load_filter_from_path(self, path):
         """Helper method to reload filter from a specific path."""
@@ -3218,7 +3232,7 @@ class FilterSoundEditor:
                 log.info("On-load snapshot: %s", os.path.basename(result))
         except Exception as e:
             log.exception("On-load backup failed for %s", path)
-            self._set_status(f"On-load backup skipped: {e}")
+            self._set_status(f"已跳过加载快照：{e}")
 
     # ============================================================
     # Filter Compatibility Check
@@ -3226,7 +3240,7 @@ class FilterSoundEditor:
     def check_filter_compatibility(self):
         """Tools menu entry — manually re-run the compatibility check."""
         if not self.filter_path or not self.lines:
-            messagebox.showinfo("No filter", "Load a filter file first.")
+            messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
             return
         self._run_compatibility_check(auto=False)
 
@@ -3252,7 +3266,7 @@ class FilterSoundEditor:
         the source of truth for what shows up in the filter.)
         """
         if not self.filter_path or not self.lines:
-            messagebox.showinfo("No filter", "Load a filter file first.")
+            messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
             return
         from features.chance_orb_section import (
             load_config, upsert_section, default_bases_path,
@@ -3305,16 +3319,16 @@ class FilterSoundEditor:
             )
         except Exception as e:
             log.exception("Chance Orb section save failed")
-            messagebox.showerror("Save error", str(e))
+            messagebox.showerror("保存失败", str(e))
             return
 
         self.refresh_filter_data()
         verb = "Inserted" if kind == 1 else "Updated"
-        self._set_status(f"{verb} '{cfg.section_title}' ({n} bases)")
+        self._set_status(f"{verb}「{cfg.section_title}」（{n} 个基底）")
         log.info("Chance Orb section %s with %d bases", verb.lower(), n)
 
         if messagebox.askyesno(
-            "Done",
+            "完成",
             f"{verb} the section ({n} base(s)).\n\n"
             "Want to open the bases file now to add or remove entries?",
         ):
@@ -3322,7 +3336,7 @@ class FilterSoundEditor:
 
     def _open_chance_bases_file(self, path: str):
         if not os.path.isfile(path):
-            messagebox.showinfo("Not found", f"Expected at:\n  {path}")
+            messagebox.showinfo("未找到", f"Expected at:\n  {path}")
             return
         try:
             if sys.platform == "win32":
@@ -3333,7 +3347,7 @@ class FilterSoundEditor:
                 subprocess.Popen(["xdg-open", path])
         except Exception as e:
             log.exception("Open chance bases failed")
-            messagebox.showerror("Open failed", str(e))
+            messagebox.showerror("打开失败", str(e))
 
     def open_debug_log(self):
         """Open the rolling debug log file in the user's default text editor."""
@@ -3355,7 +3369,7 @@ class FilterSoundEditor:
                 subprocess.Popen(["xdg-open", path])
         except Exception as e:
             log.exception("open_debug_log failed")
-            messagebox.showerror("Open failed", str(e))
+            messagebox.showerror("打开失败", str(e))
 
     def open_log_folder(self):
         """Reveal the user-config folder (settings.json + the debug log)."""
@@ -3385,9 +3399,10 @@ class FilterSoundEditor:
         """Main-window dropdown handler. Opens the dialog on the chosen mode,
         then resets to 'Off' so the dropdown behaves as an action trigger."""
         try:
-            self.economy_mode_selector.set("Off")
+            self.economy_mode_selector.set(mode_label("Off"))
         except Exception:
             pass
+        value = mode_value(value)
         if not value or value == "Off":
             return
         self.open_economy_tier_visuals(start_mode=value)
@@ -3489,7 +3504,7 @@ class FilterSoundEditor:
                 max_backups=self.settings.max_backups,
             )
         except Exception as e:
-            messagebox.showerror("Save Error",
+            messagebox.showerror("保存失败",
                                   f"Applied {applied} fix(es) in memory but couldn't save:\n{e}")
             return
 
@@ -3509,92 +3524,94 @@ class FilterSoundEditor:
         frame.pack(fill="both", expand=True, padx=16, pady=16)
 
         # --- Theme group ---
-        ctk.CTkLabel(frame, text="Appearance", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(4, 2))
+        ctk.CTkLabel(frame, text="外观", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(4, 2))
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
-        ctk.CTkLabel(row, text="Theme:").pack(side="left", padx=(0, 8))
-        theme_var = ctk.StringVar(value=self.settings.theme_palette)
-        ctk.CTkOptionMenu(row, values=palette_names(), variable=theme_var, width=260).pack(side="left")
+        ctk.CTkLabel(row, text="配色主题：").pack(side="left", padx=(0, 8))
+        theme_var = ctk.StringVar(value=palette_label(self.settings.theme_palette))
+        ctk.CTkOptionMenu(row, values=[palette_label(n) for n in palette_names()],
+                          variable=theme_var, width=260).pack(side="left")
 
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
-        ctk.CTkLabel(row, text="Appearance Mode:").pack(side="left", padx=(0, 8))
-        mode_var = ctk.StringVar(value=self.settings.appearance_mode)
-        ctk.CTkOptionMenu(row, values=["System", "Light", "Dark"], variable=mode_var, width=140).pack(side="left")
+        ctk.CTkLabel(row, text="外观模式：").pack(side="left", padx=(0, 8))
+        mode_var = ctk.StringVar(value=appearance_label(self.settings.appearance_mode))
+        ctk.CTkOptionMenu(row, values=[appearance_label(m) for m in ("System", "Light", "Dark")],
+                          variable=mode_var, width=140).pack(side="left")
 
         # --- Audio group ---
-        ctk.CTkLabel(frame, text="Audio", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
+        ctk.CTkLabel(frame, text="音频", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
-        ctk.CTkLabel(row, text="FFmpeg path (optional):").pack(side="left", padx=(0, 8))
+        ctk.CTkLabel(row, text="FFmpeg 路径（可选）：").pack(side="left", padx=(0, 8))
         ffmpeg_var = ctk.StringVar(value=self.settings.ffmpeg_path)
         ffmpeg_entry = ctk.CTkEntry(row, textvariable=ffmpeg_var, width=380)
         ffmpeg_entry.pack(side="left")
         def _browse_ffmpeg():
             p = filedialog.askopenfilename(
-                title="Locate ffmpeg",
+                title="定位 FFmpeg",
                 filetypes=[("ffmpeg", "ffmpeg.exe ffmpeg")] if os.name == "nt" else [("ffmpeg", "ffmpeg")],
             )
             if p:
                 ffmpeg_var.set(p)
-        ctk.CTkButton(row, text="Browse…", width=80, command=_browse_ffmpeg).pack(side="left", padx=(6, 0))
+        ctk.CTkButton(row, text="浏览…", width=80, command=_browse_ffmpeg).pack(side="left", padx=(6, 0))
 
         detect_label = ctk.CTkLabel(frame,
-            text=f"Currently detected: {self.ffmpeg_path or '(not found — audio preview will still try VLC/pygame/winsound)'}",
+            text=f"当前检测到：{self.ffmpeg_path or '（未找到 —— 试听仍会尝试 VLC/pygame/winsound）'}",
             font=("Segoe UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
         )
         detect_label.pack(anchor="w", pady=(2, 4))
 
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
-        ctk.CTkLabel(row, text="Default volume for new sounds:").pack(side="left", padx=(0, 8))
+        ctk.CTkLabel(row, text="新音效的默认音量：").pack(side="left", padx=(0, 8))
         vol_var = ctk.StringVar(value=str(self.settings.default_volume))
         ctk.CTkEntry(row, textvariable=vol_var, width=80).pack(side="left")
         ctk.CTkLabel(row, text="(0-300)", text_color=pal.text_muted).pack(side="left", padx=(6, 0))
 
         # --- File handling group ---
-        ctk.CTkLabel(frame, text="File Handling", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
+        ctk.CTkLabel(frame, text="文件处理", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
         autoload_var = ctk.BooleanVar(value=self.settings.autoload_last)
-        ctk.CTkCheckBox(frame, text="Re-open the last filter on startup", variable=autoload_var).pack(anchor="w", pady=2)
+        ctk.CTkCheckBox(frame, text="启动时重新打开上次的过滤器", variable=autoload_var).pack(anchor="w", pady=2)
         backup_var = ctk.BooleanVar(value=self.settings.create_backups)
-        ctk.CTkCheckBox(frame, text="Create timestamped backups on every save", variable=backup_var).pack(anchor="w", pady=2)
+        ctk.CTkCheckBox(frame, text="每次保存都创建带时间戳的备份", variable=backup_var).pack(anchor="w", pady=2)
         load_backup_var = ctk.BooleanVar(value=self.settings.auto_backup_on_load)
         ctk.CTkCheckBox(
             frame,
-            text="Snapshot the original on load (deduplicated — won't pile up reloads of the same file)",
+            text="加载时快照原始文件（会去重，重复加载同一文件不会越堆越多）",
             variable=load_backup_var,
         ).pack(anchor="w", pady=2)
 
         row = ctk.CTkFrame(frame, fg_color="transparent"); row.pack(fill="x", pady=4)
-        ctk.CTkLabel(row, text="Keep at most:").pack(side="left", padx=(0, 8))
+        ctk.CTkLabel(row, text="最多保留：").pack(side="left", padx=(0, 8))
         max_backup_var = ctk.StringVar(value=str(self.settings.max_backups))
         ctk.CTkEntry(row, textvariable=max_backup_var, width=80).pack(side="left")
-        ctk.CTkLabel(row, text="backups per filter (older ones are removed).").pack(side="left", padx=(6, 0))
+        ctk.CTkLabel(row, text="份备份/每个过滤器（更早的会被删除）。").pack(side="left", padx=(6, 0))
 
         # --- Filter health group ---
-        ctk.CTkLabel(frame, text="Filter Health", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
+        ctk.CTkLabel(frame, text="过滤器健康", font=("Segoe UI Semibold", 13)).pack(anchor="w", pady=(16, 2))
         verify_var = ctk.BooleanVar(value=self.settings.verify_on_save)
         ctk.CTkCheckBox(
             frame,
-            text="Verify on save (silently scan for missing sound files after every save and on load)",
+            text="保存时校验（每次保存后和加载时静默扫描缺失的音效文件）",
             variable=verify_var,
         ).pack(anchor="w", pady=2)
         ctk.CTkLabel(
             frame,
-            text="The status bar shows a ✓ when healthy and a ⚠ pill when sound references are missing. Click the pill, press Ctrl+H, or use Tools → Verify & Fix Sounds to repair.",
+            text="底部状态栏在音效齐全时显示 ✓，有音效引用缺失时显示 ⚠ 标签。点该标签、按 Ctrl+H，或用「音效 → 校验并修复音效…」来修复。",
             font=("Segoe UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
         ).pack(anchor="w", pady=(0, 4))
 
         compat_var = ctk.BooleanVar(value=self.settings.auto_check_compatibility)
         ctk.CTkCheckBox(
             frame,
-            text="Check filter compatibility on load (unknown commands, deprecated syntax, migration rules)",
+            text="加载时检查过滤器兼容性（未知指令、废弃语法、迁移规则）",
             variable=compat_var,
         ).pack(anchor="w", pady=2)
         ctk.CTkLabel(
             frame,
-            text="When a loaded filter contains anything unrecognized or anything matched by a rule in data/migration_rules.json, a dialog offers to auto-fix it. Disable to only run via Tools → Check Filter Compatibility.",
+            text="加载的过滤器里如果有无法识别的指令，或命中 data/migration_rules.json 里某条规则，会弹窗提示自动修复。关闭该项后只能通过「过滤器健康 → 检查过滤器兼容性…」手动执行。",
             font=("Segoe UI", 9), text_color=pal.text_muted, wraplength=580, justify="left",
         ).pack(anchor="w", pady=(0, 4))
 
         # --- Footer: settings file location + buttons ---
-        ctk.CTkLabel(frame, text=f"Settings file: {settings_path()}",
+        ctk.CTkLabel(frame, text=f"设置文件：{settings_path()}",
                      font=("Segoe UI", 9), text_color=pal.text_muted).pack(anchor="w", pady=(16, 4))
 
         btn_row = ctk.CTkFrame(frame, fg_color="transparent"); btn_row.pack(fill="x", pady=(8, 0))
@@ -3609,8 +3626,8 @@ class FilterSoundEditor:
                 new_max_backups = self.settings.max_backups
             new_ffmpeg = ffmpeg_var.get().strip()
 
-            self.settings.theme_palette = theme_var.get()
-            self.settings.appearance_mode = mode_var.get()
+            self.settings.theme_palette = palette_value(theme_var.get())
+            self.settings.appearance_mode = appearance_value(mode_var.get())
             self.settings.ffmpeg_path = new_ffmpeg
             self.settings.default_volume = new_vol
             self.settings.autoload_last = autoload_var.get()
@@ -3625,65 +3642,61 @@ class FilterSoundEditor:
             self.ffmpeg_dir, self.ffmpeg_path, self.ffprobe_path, self.ffplay_path = _resolve_ffmpeg_paths(new_ffmpeg)
             _configure_pydub_ffmpeg(self.ffmpeg_path, self.ffprobe_path)
             self.theme_manager.apply(self.settings.theme_palette, self.settings.appearance_mode)
-            self.theme_selector.set(self.settings.theme_palette)
+            self.theme_selector.set(palette_label(self.settings.theme_palette))
             self.appearance_selector.set(self.settings.appearance_mode)
             # Re-run the health scan so the indicator reflects the new on/off state
             self._update_health_indicator()
-            self._set_status("Settings saved.")
+            self._set_status("设置已保存。")
             dlg.destroy()
-        ctk.CTkButton(btn_row, text="Save", command=_save_and_close, width=120).pack(side="right", padx=4)
-        ctk.CTkButton(btn_row, text="Cancel", command=dlg.destroy, width=120,
+        ctk.CTkButton(btn_row, text="保存", command=_save_and_close, width=120).pack(side="right", padx=4)
+        ctk.CTkButton(btn_row, text="取消", command=dlg.destroy, width=120,
                       fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text).pack(side="right", padx=4)
 
-        self._setup_dialog(dlg, title="Settings",
+        self._setup_dialog(dlg, title="设置",
                            default_size=(720, 640), min_size=(620, 540))
 
     # ============================================================
     # About dialog
     # ============================================================
     HOW_TO_USE_TEXT = (
-        "Quick guide — everything in this app is also under the menus:\n"
-        "File · View · Sounds · Visuals & Tiers · Filter Health · Settings · Help.\n"
+        "使用说明 —— 本工具的每一项功能在菜单里也都能找到：\n"
+        "文件 · 视图 · 音效 · 视觉与档次 · 过滤器健康 · 设置 · 帮助。\n"
         "\n"
-        "1) LOAD A FILTER\n"
-        "   • Click  📂 Load Filter  (top-left), or File → Open Filter (Ctrl+O).\n"
-        "   • Your blocks fill the table. Use the left sidebar categories and the\n"
-        "     Search box to find the items you care about.\n"
+        "1) 加载过滤器\n"
+        "   • 点击左上角  📂 加载过滤器 ，或 文件 → 打开过滤器（Ctrl+O）。\n"
+        "   • 载入后所有规则块会列在表格里。用左侧分类栏和搜索框找到你关心的物品。\n"
         "\n"
-        "2) CHANGE A DROP SOUND\n"
-        "   • Select a row, click  🔁 Replace / Add Sound… , and pick an audio file.\n"
-        "   • The  On filtered set  buttons change the sound/volume for everything\n"
-        "     currently visible (handy for 'all uniques', 'all currency', etc.).\n"
-        "   • Preview with  ▶ Play Selected .\n"
+        "2) 修改掉落音效\n"
+        "   • 选中一行，点  🔁 替换/添加音效… ，然后挑一个音频文件。\n"
+        "   • 「对可见行批量」里的按钮会把音效/音量应用到当前可见的全部规则块\n"
+        "     （适合“所有传奇”、“所有通货”这类操作）。\n"
+        "   • 用  ▶ 试听选中 预览效果。\n"
         "\n"
-        "3) SET ONE SOUND FOR A WHOLE VALUE TIER\n"
-        "   • Sounds → Set Tier Sounds…  Pick a tier (SS…F) and choose a sound; it's\n"
-        "     applied to every item in that tier at once.\n"
+        "3) 给整个价值档次设置同一个音效\n"
+        "   • 音效 → 按档次设置音效…  选一个档次（SS…F）再选音效，\n"
+        "     该档次内的所有物品会一次性使用它。\n"
         "\n"
-        "4) RESTYLE / RECOLOR BY VALUE\n"
-        "   • Use the  Economy Tier  dropdown (top toolbar) or Visuals & Tiers →\n"
-        "     Economy Tier Visuals…  Try  Preview Only  first — it shows the changes\n"
-        "     before anything is saved.\n"
-        "   • Click  🎨 Edit Tier Styles…  to choose each tier's colours, light beam\n"
-        "     (PlayEffect) and minimap marker, and save it as a named preset.\n"
+        "4) 按价值重新配色 / 重排视觉\n"
+        "   • 用顶部工具栏的「经济档次」下拉，或 视觉与档次 → 经济档次视觉…\n"
+        "     建议先用「仅预览」看一下改动效果，再决定是否写入。\n"
+        "   • 点  🎨 编辑档次样式…  可设置每个档次的颜色、掉落光柱（PlayEffect）\n"
+        "     和小地图标记，并保存成命名预设。\n"
         "\n"
-        "5) COLOR A SINGLE BLOCK\n"
-        "   • Select a row, then use the  Color Tools  buttons (Edit / Copy / Paste /\n"
-        "     Preview / Remove).\n"
+        "5) 给单个规则块上色\n"
+        "   • 选中一行，用「颜色工具」那一排按钮（编辑 / 复制 / 粘贴 / 预览 / 移除）。\n"
         "\n"
-        "6) KEEP YOUR SOUNDS HEALTHY\n"
-        "   • Sounds → Verify & Fix Sounds…  finds missing or unused sound files and\n"
-        "     repairs the references. The status pill (bottom-right) shows health.\n"
+        "6) 保持音效文件健康\n"
+        "   • 音效 → 校验并修复音效…  会找出缺失或未被引用的音效文件并修复引用。\n"
+        "     右下角的状态标签显示当前健康状况。\n"
         "\n"
-        "7) MOVE SOUNDS TO A NEW SEASON'S FILTER\n"
-        "   • Open the  Merge  tab to copy your custom sounds into a fresh filter.\n"
+        "7) 把音效迁到新赛季的过滤器\n"
+        "   • 打开「赛季迁移」页签，把旧赛季的自定义音效复制到新过滤器里。\n"
         "\n"
-        "SAFETY\n"
-        "   • Every change makes a timestamped backup first (in a *_backups folder\n"
-        "     next to your filter). There is no undo button — roll back with a backup,\n"
-        "     or use Economy Tier → Restore Previous Visuals.\n"
+        "安全提示\n"
+        "   • 每次改动都会先在过滤器旁边生成带时间戳的备份（*_backups 目录）。\n"
+        "     本工具没有撤销按钮 —— 用备份回滚，或用 经济档次 → 恢复上一次视觉。\n"
         "\n"
-        "Need more detail? Click 'Open Full Guide' below for the complete README."
+        "需要更详细的说明？点下方「打开完整指南」查看完整 README。"
     )
 
     README_URL = "https://github.com/panyanyu/poe2-filter-sound-studio#readme"
@@ -3694,9 +3707,9 @@ class FilterSoundEditor:
         f = ctk.CTkFrame(dlg, fg_color=pal.panel)
         f.pack(fill="both", expand=True, padx=16, pady=16)
 
-        ctk.CTkLabel(f, text="How to Use", font=("Segoe UI Semibold", 18)).pack(anchor="w")
+        ctk.CTkLabel(f, text="使用说明", font=("Segoe UI Semibold", 18)).pack(anchor="w")
         ctk.CTkLabel(
-            f, text="A quick tour of what each part of the app does.",
+            f, text="快速了解本工具各部分的作用。",
             text_color=pal.text_muted,
         ).pack(anchor="w", pady=(0, 8))
 
@@ -3708,13 +3721,13 @@ class FilterSoundEditor:
 
         link_row = ctk.CTkFrame(f, fg_color="transparent")
         link_row.pack(fill="x", pady=(10, 0))
-        ctk.CTkButton(link_row, text="📖 Open Full Guide (online)",
+        ctk.CTkButton(link_row, text="📖 打开完整指南（在线）",
                       command=lambda: webbrowser.open(self.README_URL), width=220).pack(side="left", padx=4)
-        ctk.CTkButton(link_row, text="Close", command=dlg.destroy, width=110,
+        ctk.CTkButton(link_row, text="关闭", command=dlg.destroy, width=110,
                       fg_color=pal.panel_alt, hover_color=pal.border,
                       text_color=pal.text).pack(side="right", padx=4)
 
-        self._setup_dialog(dlg, title="How to Use", default_size=(720, 640),
+        self._setup_dialog(dlg, title="使用说明", default_size=(720, 640),
                            min_size=(560, 460))
 
     def show_about_dialog(self):
@@ -3723,15 +3736,15 @@ class FilterSoundEditor:
         f = ctk.CTkFrame(dlg, fg_color=pal.panel); f.pack(fill="both", expand=True, padx=16, pady=16)
 
         ctk.CTkLabel(f, text=APP_NAME, font=("Segoe UI Semibold", 18)).pack(anchor="w")
-        ctk.CTkLabel(f, text=f"Version {APP_VERSION}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
+        ctk.CTkLabel(f, text=f"版本 {APP_VERSION}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
         ctk.CTkLabel(f, text=APP_TAGLINE, text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
         ctk.CTkLabel(f,
-            text="Edit, organize, and audition sounds in Path of Exile 2 item filters.\n"
-                 "Supports CustomAlertSound, PlayAlertSound and PlayAlertSoundPositional rules,\n"
-                 "section-aware categorization, and bulk operations on the visible set.",
+            text="编辑、整理并试听《流放之路 2》物品过滤器里的掉落音效。\n"
+                 "支持 CustomAlertSound、PlayAlertSound、PlayAlertSoundPositional 三类音效规则，\n"
+                 "按章节分类，并可对当前可见的所有规则块批量操作。",
             justify="left", wraplength=520).pack(anchor="w", pady=4)
 
-        ctk.CTkLabel(f, text="Audio backends detected:", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(12, 2))
+        ctk.CTkLabel(f, text="已检测到的音频后端：", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(12, 2))
         backends = [
             ("FFmpeg", bool(self.ffmpeg_path)),
             ("ffplay", bool(self.ffplay_path)),
@@ -3746,18 +3759,18 @@ class FilterSoundEditor:
             color = pal.smart_fg if ok else pal.text_muted
             ctk.CTkLabel(f, text=f"  {mark}  {name}", text_color=color).pack(anchor="w")
 
-        ctk.CTkLabel(f, text="Settings stored at:", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(12, 2))
+        ctk.CTkLabel(f, text="设置文件位置：", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(12, 2))
         ctk.CTkLabel(f, text=settings_path(), text_color=pal.text_muted, wraplength=480, justify="left").pack(anchor="w")
 
         link_row = ctk.CTkFrame(f, fg_color="transparent"); link_row.pack(fill="x", pady=(12, 0))
-        ctk.CTkButton(link_row, text="Open FilterBlade",
+        ctk.CTkButton(link_row, text="打开 FilterBlade",
                       command=lambda: webbrowser.open("https://www.filterblade.xyz/?game=Poe2"), width=160).pack(side="left", padx=4)
-        ctk.CTkButton(link_row, text="POE2 Filter Syntax",
+        ctk.CTkButton(link_row, text="流放2过滤器语法",
                       command=lambda: webbrowser.open("https://www.pathofexile.com/forum/view-thread/3683711"), width=160).pack(side="left", padx=4)
-        ctk.CTkButton(link_row, text="Close", command=dlg.destroy, width=100,
+        ctk.CTkButton(link_row, text="关闭", command=dlg.destroy, width=100,
                       fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text).pack(side="right", padx=4)
 
-        self._setup_dialog(dlg, title=f"About — {APP_NAME}",
+        self._setup_dialog(dlg, title=f"关于 — {APP_NAME}",
                            default_size=(580, 520), min_size=(520, 460),
                            allow_resize=False)
 
@@ -3766,7 +3779,7 @@ class FilterSoundEditor:
     # ============================================================
     def open_sound_manager(self):
         if not self.filter_path:
-            messagebox.showinfo("No filter", "Load a filter file first.")
+            messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
             return
         folder = os.path.dirname(self.filter_path)
 
@@ -3793,7 +3806,7 @@ class FilterSoundEditor:
         pal = self.theme_manager.current()
         f = ctk.CTkFrame(dlg, fg_color=pal.panel); f.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(f, text=f"Folder: {folder}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
+        ctk.CTkLabel(f, text=f"目录：{folder}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
 
         summary = (f"{len(referenced)} referenced  •  {len(present)} present on disk  "
                    f"•  {len(missing)} missing  •  {len(orphan)} orphan (not referenced)")
@@ -3830,10 +3843,10 @@ class FilterSoundEditor:
         def _delete_selected_orphans():
             sel = orphan_lb.curselection()
             if not sel:
-                messagebox.showinfo("Nothing selected", "Select orphan files to delete first.")
+                messagebox.showinfo("未选择任何项", "请先选择要删除的孤立文件。")
                 return
             files = [orphan[i] for i in sel]
-            if not messagebox.askyesno("Delete files",
+            if not messagebox.askyesno("删除文件",
                                         f"Permanently delete {len(files)} orphan audio file(s) from\n{folder}?"):
                 return
             errors = []
@@ -3843,19 +3856,19 @@ class FilterSoundEditor:
                 except OSError as e:
                     errors.append(f"{fn}: {e}")
             if errors:
-                messagebox.showwarning("Some deletions failed", "\n".join(errors))
+                messagebox.showwarning("部分文件删除失败", "\n".join(errors))
             dlg.destroy()
             self.open_sound_manager()  # re-open with refreshed state
 
-        ctk.CTkButton(actions, text="Open Folder", width=130,
+        ctk.CTkButton(actions, text="打开目录", width=130,
                       command=lambda: self._open_folder(folder)).pack(side="left", padx=4)
-        ctk.CTkButton(actions, text="Delete Selected Orphans",
+        ctk.CTkButton(actions, text="删除选中的孤立文件",
                       command=_delete_selected_orphans, width=200,
                       fg_color=pal.danger, hover_color=pal.danger_hover).pack(side="left", padx=4)
-        ctk.CTkButton(actions, text="Close", command=dlg.destroy, width=100,
+        ctk.CTkButton(actions, text="关闭", command=dlg.destroy, width=100,
                       fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text).pack(side="right", padx=4)
 
-        self._setup_dialog(dlg, title="Sound File Manager",
+        self._setup_dialog(dlg, title="音效文件管理",
                            default_size=(840, 620), min_size=(720, 500))
 
     # ============================================================
@@ -3918,14 +3931,14 @@ class FilterSoundEditor:
 
         if not self.filter_path or not self.filter_data:
             self.health_indicator.configure(
-                text="—  no filter loaded",
+                text="—  未加载过滤器",
                 fg_color="#3a3a3a", hover_color="#4a4a4a", text_color="#cccccc",
             )
             return
 
         if not self.settings.verify_on_save:
             self.health_indicator.configure(
-                text="health checks off",
+                text="健康检查已关闭",
                 fg_color="#3a3a3a", hover_color="#4a4a4a", text_color="#a0a0a0",
             )
             return
@@ -3934,7 +3947,7 @@ class FilterSoundEditor:
             _folder, _ref, _disk, missing, _present, orphan = self._scan_sound_health()
         except Exception:
             self.health_indicator.configure(
-                text="health: scan failed",
+                text="健康检查：扫描失败",
                 fg_color="#5a3a0c", hover_color="#7a4a10", text_color="#ffffff",
             )
             return
@@ -3954,23 +3967,23 @@ class FilterSoundEditor:
             )
         elif orphan:
             self.health_indicator.configure(
-                text=f"✓ healthy  •  {len(orphan)} orphan(s)",
+                text=f"✓ 正常  •  {len(orphan)} 个孤立文件",
                 fg_color="#2d6e3e", hover_color="#358148", text_color="#ffffff",
             )
         else:
             self.health_indicator.configure(
-                text="✓ healthy",
+                text="✓ 正常",
                 fg_color="#2d6e3e", hover_color="#358148", text_color="#ffffff",
             )
 
     def verify_and_fix_sounds(self):
         if not self.filter_path:
-            messagebox.showinfo("No filter", "Load a filter file first.")
+            messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
             return
 
         folder, ref_counts, on_disk, missing, present, orphan = self._scan_sound_health()
         if not folder or not os.path.isdir(folder):
-            messagebox.showerror("Folder missing", f"Could not access the filter's folder:\n{folder}")
+            messagebox.showerror("目录不存在", f"Could not access the filter's folder:\n{folder}")
             return
 
         # ---- Healthy filter shortcut ----
@@ -4015,10 +4028,10 @@ class FilterSoundEditor:
         # ----- Header summary -----
         ctk.CTkLabel(
             main,
-            text=f"Filter: {os.path.basename(self.filter_path)}",
+            text=f"过滤器：{os.path.basename(self.filter_path)}",
             font=("Segoe UI Semibold", 13),
         ).pack(anchor="w")
-        ctk.CTkLabel(main, text=f"Folder: {folder}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
+        ctk.CTkLabel(main, text=f"目录：{folder}", text_color=pal.text_muted).pack(anchor="w", pady=(0, 8))
 
         affected_blocks = sum(ref_counts.get(m, 0) for m in missing)
         summary = (
@@ -4031,7 +4044,7 @@ class FilterSoundEditor:
         # ----- Missing -> Substitute table -----
         if missing:
             ctk.CTkLabel(
-                main, text="Missing references → planned substitute",
+                main, text="缺失的引用 → 计划替换为",
                 font=("Segoe UI Semibold", 11),
             ).pack(anchor="w", pady=(8, 2))
 
@@ -4039,10 +4052,10 @@ class FilterSoundEditor:
             mf.pack(fill="both", expand=True, pady=4)
             cols = ("missing", "arrow", "substitute", "count")
             miss_tree = ttk.Treeview(mf, columns=cols, show="headings", height=8, selectmode="browse")
-            miss_tree.heading("missing", text="Missing sound (referenced by filter)")
+            miss_tree.heading("missing", text="缺失的音效（过滤器引用了它）")
             miss_tree.heading("arrow", text="")
-            miss_tree.heading("substitute", text="Will be replaced with (in folder)")
-            miss_tree.heading("count", text="Blocks")
+            miss_tree.heading("substitute", text="将被替换为（目录内已有）")
+            miss_tree.heading("count", text="影响块数")
             miss_tree.column("missing", width=320, anchor="w")
             miss_tree.column("arrow", width=24, anchor="center")
             miss_tree.column("substitute", width=320, anchor="w")
@@ -4075,15 +4088,15 @@ class FilterSoundEditor:
                 for fn in missing:
                     plan[fn] = random.choice(pool)
                 repopulate_missing()
-            ctk.CTkButton(ctl, text="🎲 Randomize Again", command=reroll, width=180).pack(side="left", padx=4)
-            ctk.CTkLabel(ctl, text="(Double-click a row to choose a specific substitute.)",
+            ctk.CTkButton(ctl, text="🎲 重新随机", command=reroll, width=180).pack(side="left", padx=4)
+            ctk.CTkLabel(ctl, text="（双击某一行可指定替代音效。）",
                          text_color=pal.text_muted).pack(side="left", padx=8)
 
         # ----- Orphan archive list -----
         if orphan:
             ctk.CTkLabel(
                 main,
-                text=f"Orphan audio files → will be moved to “{self.OLD_SOUNDS_FOLDER}/”",
+                text=f"孤立音效文件 → 将被移动到“{self.OLD_SOUNDS_FOLDER}/”",
                 font=("Segoe UI Semibold", 11),
             ).pack(anchor="w", pady=(12, 2))
             of = ctk.CTkFrame(main, fg_color=pal.panel_alt)
@@ -4109,13 +4122,13 @@ class FilterSoundEditor:
         if missing:
             ctk.CTkCheckBox(
                 opts,
-                text="Replace missing references with substitutes (rewrites the filter)",
+                text="用替代音效替换缺失引用（会改写过滤器）",
                 variable=fix_var,
             ).pack(anchor="w", pady=2)
         if orphan:
             ctk.CTkCheckBox(
                 opts,
-                text=f"Move orphan files to “{self.OLD_SOUNDS_FOLDER}/” (creates folder if needed)",
+                text=f"把孤立音效文件移动到“{self.OLD_SOUNDS_FOLDER}/”（不存在则自动创建）",
                 variable=move_var,
             ).pack(anchor="w", pady=2)
 
@@ -4132,24 +4145,24 @@ class FilterSoundEditor:
             try:
                 summary_text = self._apply_verify_fix(folder, substitutions, orphans_to_move)
             except Exception as e:
-                messagebox.showerror("Apply failed", f"{e}")
+                messagebox.showerror("应用失败", f"{e}")
                 return
             dlg.destroy()
-            messagebox.showinfo("Done", summary_text)
+            messagebox.showinfo("完成", summary_text)
             # Reload to pick up the changed file (also rebuilds the sidebar counts)
             if self.filter_path and os.path.isfile(self.filter_path):
                 self.load_filter_from_path(self.filter_path)
 
         ctk.CTkButton(
-            btn_row, text="Cancel", command=dlg.destroy, width=120,
+            btn_row, text="取消", command=dlg.destroy, width=120,
             fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text,
         ).pack(side="right", padx=4)
         ctk.CTkButton(
-            btn_row, text="Apply Changes", command=apply, width=180,
+            btn_row, text="应用改动", command=apply, width=180,
             fg_color=pal.accent, hover_color=pal.accent_hover, text_color=pal.accent_text,
         ).pack(side="right", padx=4)
 
-        self._setup_dialog(dlg, title="Verify & Fix Filter Sounds",
+        self._setup_dialog(dlg, title="校验并修复音效",
                            default_size=(960, 720), min_size=(800, 600))
 
     def _open_substitute_picker(self, parent, missing_name, pool, plan, on_pick):
@@ -4157,7 +4170,7 @@ class FilterSoundEditor:
         pal = self.theme_manager.current()
         picker = ctk.CTkToplevel(parent)
 
-        ctk.CTkLabel(picker, text=f"Choose a substitute for:\n{missing_name}",
+        ctk.CTkLabel(picker, text=f"为下列缺失音效选择替代：\n{missing_name}",
                      wraplength=420, justify="left").pack(anchor="w", padx=12, pady=(12, 6))
 
         frame = ctk.CTkFrame(picker, fg_color=pal.panel_alt)
@@ -4187,12 +4200,12 @@ class FilterSoundEditor:
                 plan[missing_name] = pool[sel[0]]
                 on_pick()
             picker.destroy()
-        ctk.CTkButton(btns, text="Cancel", command=picker.destroy, width=100,
+        ctk.CTkButton(btns, text="取消", command=picker.destroy, width=100,
                       fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text).pack(side="right", padx=4)
-        ctk.CTkButton(btns, text="Use This Sound", command=confirm, width=160,
+        ctk.CTkButton(btns, text="使用该音效", command=confirm, width=160,
                       fg_color=pal.accent, hover_color=pal.accent_hover, text_color=pal.accent_text).pack(side="right", padx=4)
 
-        self._setup_dialog(picker, title=f"Substitute for {missing_name}",
+        self._setup_dialog(picker, title=f"替代音效：{missing_name}",
                            default_size=(520, 480), min_size=(420, 380),
                            parent=parent)
 
@@ -4271,7 +4284,7 @@ class FilterSoundEditor:
     def make_sounds_unique(self):
         """Randomize sounds across the current filtered set to reduce duplication."""
         if not self.filter_path:
-            messagebox.showinfo("No filter", "Load a filter file first.")
+            messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
             return
 
         # Working set = currently visible CustomAlertSound rows (sidebar + search applied).
@@ -4330,12 +4343,12 @@ class FilterSoundEditor:
         balanced_cap = (block_count + pool_size - 1) // pool_size if pool_size else 0
 
         # ----- Header -----
-        ctk.CTkLabel(main, text="Make Sounds Unique",
+        ctk.CTkLabel(main, text="音效去重",
                      font=("Segoe UI Semibold", 16)).pack(anchor="w")
         ctk.CTkLabel(
             main,
-            text="Reassigns sounds across the currently visible CustomAlertSound rules "
-                 "(respects the sidebar + search filter).",
+            text="对当前可见的自定义警报音效规则重新分配音效"
+                 "（受左侧分类和搜索框影响）。",
             text_color=pal.text_muted, wraplength=720, justify="left",
         ).pack(anchor="w", pady=(0, 6))
 
@@ -4354,7 +4367,7 @@ class FilterSoundEditor:
         pool_color = pal.smart_fg if can_all_unique else "#f0a020"
         stat(stats, pool_size, "audio files in pool", color=pool_color)
         ctk.CTkButton(
-            stats, text="Refresh Pool", width=120,
+            stats, text="刷新音效池", width=120,
             command=lambda: (dlg.destroy(), self.make_sounds_unique()),
             fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text,
         ).pack(side="right", padx=12, pady=8)
@@ -4364,7 +4377,7 @@ class FilterSoundEditor:
         if dup_items:
             ctk.CTkLabel(
                 main,
-                text=f"Currently duplicated ({len(dup_items)} file(s) used >1 time):",
+                text=f"当前存在重复（{len(dup_items)} 个文件被用了不止一次）：",
                 font=("Segoe UI Semibold", 11),
             ).pack(anchor="w", pady=(4, 2))
             dup_frame = ctk.CTkFrame(main, fg_color=pal.panel_alt)
@@ -4373,12 +4386,12 @@ class FilterSoundEditor:
                 ctk.CTkLabel(dup_frame, text=f"  {c:>4}×   {s}",
                              text_color=pal.text_muted, font=("Consolas", 10)).pack(anchor="w", padx=8)
             if len(dup_items) > 10:
-                ctk.CTkLabel(dup_frame, text=f"  ... and {len(dup_items) - 10} more",
+                ctk.CTkLabel(dup_frame, text=f"  …… 另外还有 {len(dup_items) - 10} 个",
                              text_color=pal.text_muted).pack(anchor="w", padx=8)
         else:
             ctk.CTkLabel(
                 main,
-                text="✓ The working set already has no duplicated sounds.",
+                text="✓ 当前工作集里已经没有重复音效。",
                 font=("Segoe UI Semibold", 12), text_color=pal.smart_fg,
             ).pack(anchor="w", pady=(4, 4))
 
@@ -4388,7 +4401,7 @@ class FilterSoundEditor:
             warn.pack(fill="x", pady=8)
             ctk.CTkLabel(
                 warn,
-                text="⚠ Not enough sound files to give every block a unique sound.",
+                text="⚠ 音效文件数量不够，无法让每个块都用不同音效。",
                 font=("Segoe UI Semibold", 11), text_color="#ffffff",
             ).pack(anchor="w", padx=10, pady=(8, 2))
             ctk.CTkLabel(
@@ -4404,7 +4417,7 @@ class FilterSoundEditor:
             ).pack(anchor="w", padx=10, pady=(0, 4))
             row = ctk.CTkFrame(warn, fg_color="transparent")
             row.pack(fill="x", padx=10, pady=(0, 8))
-            ctk.CTkButton(row, text="Open Sound Folder", width=160,
+            ctk.CTkButton(row, text="打开音效目录", width=160,
                           command=lambda: self._open_folder(folder),
                           fg_color=pal.accent, hover_color=pal.accent_hover,
                           text_color=pal.accent_text).pack(side="left")
@@ -4413,21 +4426,21 @@ class FilterSoundEditor:
         strategy_var = ctk.StringVar(value="unique" if can_all_unique else "balanced")
         sframe = ctk.CTkFrame(main, fg_color="transparent")
         sframe.pack(fill="x", pady=(8, 4))
-        ctk.CTkLabel(sframe, text="Strategy:", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        ctk.CTkLabel(sframe, text="策略：", font=("Segoe UI Semibold", 11)).pack(anchor="w")
         ctk.CTkRadioButton(
             sframe,
-            text=f"Every block unique (1:1 assignment) — needs {block_count} sounds, "
+            text=f"每个块都不同（1:1 分配）—— 需要 {block_count} 个音效，"
                  f"you have {pool_size}" + ("  ✓" if can_all_unique else "  ✗ disabled"),
             variable=strategy_var, value="unique", state=("normal" if can_all_unique else "disabled"),
         ).pack(anchor="w", padx=14, pady=2)
         ctk.CTkRadioButton(
             sframe,
-            text=f"Minimize duplication (each sound used ≤ {balanced_cap} time(s), evenly distributed)",
+            text=f"尽量减少重复（每个音效最多用 {balanced_cap} 次，均匀分配）",
             variable=strategy_var, value="balanced",
         ).pack(anchor="w", padx=14, pady=2)
         ctk.CTkRadioButton(
             sframe,
-            text="Pure random (each block independently — duplicates allowed)",
+            text="纯随机（每个块独立抽取，允许重复）",
             variable=strategy_var, value="random",
         ).pack(anchor="w", padx=14, pady=2)
 
@@ -4441,7 +4454,7 @@ class FilterSoundEditor:
             n_changed = self._apply_sound_assignment(assignment)
             if n_changed == 0:
                 dlg.destroy()
-                messagebox.showinfo("No changes", "Random assignment happened to match the existing sounds — nothing was written.")
+                messagebox.showinfo("无改动", "随机结果恰好和现有音效一致 —— 没有写入任何改动。")
                 return
             try:
                 save_filter_file(
@@ -4450,11 +4463,11 @@ class FilterSoundEditor:
                     max_backups=self.settings.max_backups,
                 )
             except Exception as e:
-                messagebox.showerror("Save error", str(e))
+                messagebox.showerror("保存失败", str(e))
                 return
             dlg.destroy()
             messagebox.showinfo(
-                "Done",
+                "完成",
                 f"Reassigned sound on {n_changed} block(s)\n"
                 f"Strategy: {strategy}\n"
                 f"Pool size: {len(pool)} file(s)",
@@ -4462,12 +4475,12 @@ class FilterSoundEditor:
             # Reload so the table, sidebar counts, and health indicator all refresh
             self.load_filter_from_path(self.filter_path)
 
-        ctk.CTkButton(btn_row, text="Cancel", command=dlg.destroy, width=120,
+        ctk.CTkButton(btn_row, text="取消", command=dlg.destroy, width=120,
                       fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text).pack(side="right", padx=4)
-        ctk.CTkButton(btn_row, text="Apply", command=apply, width=140,
+        ctk.CTkButton(btn_row, text="应用", command=apply, width=140,
                       fg_color=pal.accent, hover_color=pal.accent_hover, text_color=pal.accent_text).pack(side="right", padx=4)
 
-        self._setup_dialog(dlg, title="Make Sounds Unique",
+        self._setup_dialog(dlg, title="音效去重",
                            default_size=(840, 740), min_size=(720, 620))
 
     def _compute_unique_assignment(self, working, pool, strategy):
@@ -4539,7 +4552,7 @@ class FilterSoundEditor:
     # ============================================================
     def show_filter_statistics(self):
         if not self.filter_data:
-            messagebox.showinfo("No data", "Load a filter file first.")
+            messagebox.showinfo("没有数据", "请先加载过滤器文件。")
             return
         from collections import Counter
         total = len(self.filter_data)
@@ -4591,10 +4604,10 @@ class FilterSoundEditor:
             for fn, n in top_sounds:
                 line(f"  {n:>4}×   {fn}", muted=True)
 
-        ctk.CTkButton(f, text="Close", command=dlg.destroy, width=100,
+        ctk.CTkButton(f, text="关闭", command=dlg.destroy, width=100,
                       fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text).pack(side="right", pady=(8, 0))
 
-        self._setup_dialog(dlg, title="Filter Statistics",
+        self._setup_dialog(dlg, title="过滤器统计",
                            default_size=(700, 680), min_size=(580, 520))
 
 

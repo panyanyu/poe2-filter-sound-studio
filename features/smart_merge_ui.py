@@ -159,7 +159,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     def load_old():
         """Load old season filter."""
         path = filedialog.askopenfilename(
-            title="Load Old Season Filter",
+            title="加载旧赛季过滤器",
             filetypes=[("Filter Files", "*.filter")]
         )
         if not path:
@@ -171,12 +171,12 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
             set_status(f"Loaded old filter: {len(controller.old_blocks)} blocks")
             update_info()
         else:
-            messagebox.showerror("Error", "Failed to load old filter")
+            messagebox.showerror("错误", "旧过滤器加载失败")
 
     def load_new():
         """Load new season filter."""
         path = filedialog.askopenfilename(
-            title="Load New Season Filter",
+            title="加载新赛季过滤器",
             filetypes=[("Filter Files", "*.filter")]
         )
         if not path:
@@ -188,12 +188,12 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
             set_status(f"Loaded new filter: {len(controller.new_blocks)} blocks")
             update_info()
         else:
-            messagebox.showerror("Error", "Failed to load new filter")
+            messagebox.showerror("错误", "新过滤器加载失败")
 
     def find_matches():
         """Find matches between filters."""
         if not controller.old_blocks or not controller.new_blocks:
-            messagebox.showwarning("Warning", "Please load both filters first")
+            messagebox.showwarning("警告", "请先加载两个过滤器")
             return
 
         set_status("Finding matches...")
@@ -210,22 +210,22 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     def auto_approve():
         """Auto-approve high confidence matches."""
         if not controller.matches:
-            messagebox.showwarning("Warning", "Find matches first")
+            messagebox.showwarning("警告", "请先查找匹配")
             return
 
         count = controller.auto_approve_high_confidence(threshold=0.9)
-        messagebox.showinfo("Auto-Approve", f"Approved {count} high-confidence matches (90%+)")
+        messagebox.showinfo("自动通过", f"Approved {count} high-confidence matches (90%+)")
         update_matches_table()
 
     def execute():
         """Execute the migration."""
         if not controller.matches:
-            messagebox.showwarning("Warning", "Find matches first")
+            messagebox.showwarning("警告", "请先查找匹配")
             return
 
         approved_count = sum(1 for m in controller.matches if m.user_approved is True)
         if approved_count == 0:
-            messagebox.showwarning("Warning", "No matches approved. Please review and approve matches.")
+            messagebox.showwarning("警告", "没有已通过的匹配，请先审阅并通过匹配项。")
             return
 
         # Confirm
@@ -242,7 +242,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
 
         merged_lines = controller.execute_merge()
         if not merged_lines:
-            messagebox.showerror("Error", "Migration failed")
+            messagebox.showerror("错误", "迁移失败")
             return
 
         # Save merged filter
@@ -252,7 +252,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
         default_name = f"migrated_{old_base}_to_{new_base}_{ts}.filter"
 
         save_path = filedialog.asksaveasfilename(
-            title="Save Migrated Filter",
+            title="保存迁移结果",
             defaultextension=".filter",
             initialfile=default_name,
             filetypes=[("Filter Files", "*.filter")]
@@ -273,12 +273,12 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
             set_status(f"Migration complete • {approved_count} sounds transferred")
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to save file:\n{e}")
+            messagebox.showerror("错误", f"Failed to save file:\n{e}")
 
     def update_info():
         """Update info label."""
         if not controller.old_blocks or not controller.new_blocks:
-            info_label.configure(text="Load both filters to begin")
+            info_label.configure(text="加载两个过滤器后即可开始")
             return
 
         old_with_sounds = sum(1 for b in controller.old_blocks if b.sound_lines)
@@ -399,7 +399,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     main_container.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Title
-    title = ctk.CTkLabel(main_container, text="🔀 Smart Season Migration",
+    title = ctk.CTkLabel(main_container, text="🔀 智能赛季迁移",
                         font=("Segoe UI", 18, "bold"))
     title.pack(pady=(0, 10))
 
@@ -410,17 +410,17 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     # Old filter
     old_row = ctk.CTkFrame(file_frame)
     old_row.pack(fill="x", pady=5)
-    ctk.CTkButton(old_row, text="📂 Old Season Filter", width=180,
+    ctk.CTkButton(old_row, text="📂 旧赛季过滤器", width=180,
                  command=load_old).pack(side="left", padx=(10, 10))
-    old_label = ctk.CTkLabel(old_row, text="No file loaded")
+    old_label = ctk.CTkLabel(old_row, text="未加载文件")
     old_label.pack(side="left")
 
     # New filter
     new_row = ctk.CTkFrame(file_frame)
     new_row.pack(fill="x", pady=5)
-    ctk.CTkButton(new_row, text="📂 New Season Filter", width=180,
+    ctk.CTkButton(new_row, text="📂 新赛季过滤器", width=180,
                  command=load_new).pack(side="left", padx=(10, 10))
-    new_label = ctk.CTkLabel(new_row, text="No file loaded")
+    new_label = ctk.CTkLabel(new_row, text="未加载文件")
     new_label.pack(side="left")
 
     # Controls
@@ -430,7 +430,7 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     # Confidence slider
     slider_frame = ctk.CTkFrame(control_frame)
     slider_frame.pack(side="left", padx=10, pady=10)
-    ctk.CTkLabel(slider_frame, text="Min Confidence:").pack(side="left", padx=(0, 5))
+    ctk.CTkLabel(slider_frame, text="最低置信度：").pack(side="left", padx=(0, 5))
     confidence_slider = ctk.CTkSlider(slider_frame, from_=0, to=100, number_of_steps=20)
     confidence_slider.set(50)  # Default 50%
     confidence_slider.pack(side="left", padx=5)
@@ -443,15 +443,15 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     confidence_slider.configure(command=update_conf_label)
 
     # Buttons
-    ctk.CTkButton(control_frame, text="🔍 Find Matches", width=140,
+    ctk.CTkButton(control_frame, text="🔍 查找匹配", width=140,
                  command=find_matches).pack(side="left", padx=5, pady=10)
-    ctk.CTkButton(control_frame, text="✓ Auto-Approve 90%+", width=160,
+    ctk.CTkButton(control_frame, text="✓ 自动通过 90% 以上", width=160,
                  command=auto_approve).pack(side="left", padx=5, pady=10)
-    ctk.CTkButton(control_frame, text="🚀 Execute Migration", width=160,
+    ctk.CTkButton(control_frame, text="🚀 执行迁移", width=160,
                  command=execute, fg_color="green", hover_color="darkgreen").pack(side="left", padx=5, pady=10)
 
     # Info
-    info_label = ctk.CTkLabel(main_container, text="Load both filters to begin",
+    info_label = ctk.CTkLabel(main_container, text="加载两个过滤器后即可开始",
                              justify="left", anchor="w")
     info_label.pack(fill="x", padx=10, pady=(0, 10))
 
@@ -468,11 +468,11 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
                                selectmode="browse", style="Matches.Treeview")
 
     matches_tree.heading("status", text="")
-    matches_tree.heading("conf", text="Conf")
-    matches_tree.heading("type", text="Type")
-    matches_tree.heading("old", text="Old Block")
-    matches_tree.heading("new", text="New Block")
-    matches_tree.heading("transfer", text="Will Transfer")
+    matches_tree.heading("conf", text="置信度")
+    matches_tree.heading("type", text="类型")
+    matches_tree.heading("old", text="旧规则块")
+    matches_tree.heading("new", text="新规则块")
+    matches_tree.heading("transfer", text="将迁移")
 
     matches_tree.column("status", width=30)
     matches_tree.column("conf", width=60)
@@ -502,16 +502,16 @@ def enhance_merge_tab(merge_tab_frame, status_callback):
     action_frame = ctk.CTkFrame(main_container)
     action_frame.pack(fill="x", pady=(0, 10))
 
-    ctk.CTkButton(action_frame, text="✓ Approve Selected", width=140,
+    ctk.CTkButton(action_frame, text="✓ 通过选中项", width=140,
                  command=approve_selected).pack(side="left", padx=10)
-    ctk.CTkButton(action_frame, text="✗ Reject Selected", width=140,
+    ctk.CTkButton(action_frame, text="✗ 拒绝选中项", width=140,
                  command=reject_selected).pack(side="left", padx=10)
 
     # Detail panel
     detail_frame = ctk.CTkFrame(main_container)
     detail_frame.pack(fill="x", pady=(0, 10))
 
-    ctk.CTkLabel(detail_frame, text="Match Details:",
+    ctk.CTkLabel(detail_frame, text="匹配详情：",
                 font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
 
     detail_text = ctk.CTkTextbox(detail_frame, height=150, wrap="none")

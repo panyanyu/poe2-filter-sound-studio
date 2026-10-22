@@ -68,7 +68,7 @@ class _TierStyleEditor:
         wrapper = ctk.CTkFrame(self.dlg, fg_color=self.pal.panel)
         wrapper.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(wrapper, text="Edit Tier Styles", font=("Segoe UI Semibold", 14)).pack(
+        ctk.CTkLabel(wrapper, text="编辑档次样式", font=("Segoe UI Semibold", 14)).pack(
             anchor="w"
         )
         ctk.CTkLabel(
@@ -86,7 +86,7 @@ class _TierStyleEditor:
         # Name row.
         name_row = ctk.CTkFrame(wrapper, fg_color="transparent")
         name_row.pack(fill="x", pady=(0, 6))
-        ctk.CTkLabel(name_row, text="Preset name:").pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(name_row, text="预设名称：").pack(side="left", padx=(0, 6))
         self.name_var = tk.StringVar(
             value=self.start_name if self.is_user_start else f"{self.start_name} (copy)"
         )
@@ -97,7 +97,7 @@ class _TierStyleEditor:
 
         app._setup_dialog(
             self.dlg,
-            title="Edit Tier Styles",
+            title="编辑档次样式",
             default_size=(1040, 760),
             min_size=(900, 600),
         )
@@ -215,7 +215,7 @@ class _TierStyleEditor:
                 command=lambda _v, t=tier: self._on_change(t),
             ).pack(side="left", padx=1)
 
-            preview = tk.Label(frame, text=f" {tier} item ", font=("Segoe UI", 10, "bold"))
+            preview = tk.Label(frame, text=f" {tier} 档次物品 ", font=("Segoe UI", 10, "bold"))
             preview.grid(row=r, column=8, padx=6, pady=3, sticky="w")
             w["preview"] = preview
             self.widgets[tier] = w
@@ -243,7 +243,7 @@ class _TierStyleEditor:
 
         ColorPickerDialog(
             self.dlg,
-            title=f"{tier} — {key} colour",
+            title=f"{tier} — {key} 颜色",
             initial_color=tuple(self.state[tier][key]),
             callback=cb,
         )
@@ -284,7 +284,7 @@ class _TierStyleEditor:
         row.pack(fill="x", pady=(8, 0))
         ctk.CTkButton(
             row,
-            text="Save Preset",
+            text="保存预设",
             command=self._save,
             width=160,
             fg_color=pal.accent,
@@ -294,7 +294,7 @@ class _TierStyleEditor:
         if self.is_user_start:
             ctk.CTkButton(
                 row,
-                text="Delete Preset",
+                text="删除预设",
                 command=self._delete,
                 width=140,
                 fg_color="#7a2a2a",
@@ -303,7 +303,7 @@ class _TierStyleEditor:
             ).pack(side="right", padx=4)
         ctk.CTkButton(
             row,
-            text="Close",
+            text="关闭",
             command=self.dlg.destroy,
             width=110,
             fg_color=pal.panel_alt,
@@ -334,7 +334,7 @@ class _TierStyleEditor:
     def _save(self):
         name = self.name_var.get().strip()
         if not name:
-            messagebox.showwarning("Name required", "Enter a preset name.")
+            messagebox.showwarning("需要名称", "请输入预设名称。")
             return
         # Refuse to overwrite a shipped (non-user) template.
         if not self.controller.templates.is_user(name) and name in self.controller.template_names():
@@ -345,28 +345,28 @@ class _TierStyleEditor:
             )
             return
         if self.controller.templates.is_user(name):
-            if not messagebox.askyesno("Overwrite preset", f"Overwrite your preset '{name}'?"):
+            if not messagebox.askyesno("覆盖预设", f"Overwrite your preset '{name}'?"):
                 return
         try:
             template = self._build_template(name)
         except ValueError:
-            messagebox.showerror("Invalid font size", "Font size must be a whole number (1–60).")
+            messagebox.showerror("字体大小无效", "字体大小必须是 1–60 的整数。")
             return
         try:
             save_user_template(template)
         except TemplateError as exc:
-            messagebox.showerror("Could not save preset", str(exc))
+            messagebox.showerror("无法保存预设", str(exc))
             return
 
         self.controller.reload_templates(select=name)
         if self.on_saved:
             self.on_saved(name)
         self.app._set_status(f"Saved economy tier preset '{name}'.")
-        messagebox.showinfo("Preset saved", f"Saved preset '{name}'. It's now selectable.")
+        messagebox.showinfo("预设已保存", f"Saved preset '{name}'. It's now selectable.")
 
     def _delete(self):
         name = self.start_name
-        if not messagebox.askyesno("Delete preset", f"Delete your preset '{name}'?"):
+        if not messagebox.askyesno("删除预设", f"Delete your preset '{name}'?"):
             return
         if delete_user_template(name):
             self.controller.reload_templates()
@@ -375,7 +375,7 @@ class _TierStyleEditor:
             self.app._set_status(f"Deleted economy tier preset '{name}'.")
             self.dlg.destroy()
         else:
-            messagebox.showinfo("Nothing deleted", f"No user preset named '{name}'.")
+            messagebox.showinfo("未删除任何内容", f"No user preset named '{name}'.")
 
 
 def _hex(rgba) -> str:

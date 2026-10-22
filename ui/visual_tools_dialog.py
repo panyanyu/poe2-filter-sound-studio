@@ -31,20 +31,20 @@ from ui.tier_detail_dialog import open_tier_detail
 
 
 _TIER_LABELS = {
-    ValueTier.MYTHIC: "Mythic",
-    ValueTier.TOP: "Top",
-    ValueTier.HIGH: "High",
-    ValueTier.MID: "Mid",
-    ValueTier.LOW: "Low",
-    ValueTier.JUNK: "Junk",
-    ValueTier.HIDDEN: "Hidden (skipped)",
+    ValueTier.MYTHIC: "神话",
+    ValueTier.TOP: "顶级",
+    ValueTier.HIGH: "高档",
+    ValueTier.MID: "中档",
+    ValueTier.LOW: "低档",
+    ValueTier.JUNK: "垃圾",
+    ValueTier.HIDDEN: "隐藏（已跳过）",
 }
 
 
 def open_visual_tools(app, start_tab: str = "emphasize") -> None:
     """Entry point from main.py. Opens the dialog on the requested tab."""
     if not app.filter_path or not app.lines:
-        messagebox.showinfo("No filter", "Load a filter file first.")
+        messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
         return
     _VisualToolsDialog(app, start_tab=start_tab)
 
@@ -75,7 +75,7 @@ class _VisualToolsDialog:
 
         ctk.CTkLabel(
             wrapper,
-            text=f"Filter: {os.path.basename(app.filter_path)}",
+            text=f"过滤器：{os.path.basename(app.filter_path)}",
             font=("Segoe UI Semibold", 13),
         ).pack(anchor="w")
         ctk.CTkLabel(
@@ -95,9 +95,9 @@ class _VisualToolsDialog:
             text_color=self.pal.text_muted,
         )
         self._presets_label.pack(side="left", padx=(0, 8))
-        ctk.CTkButton(edit_bar, text="📝 Edit Presets File",
+        ctk.CTkButton(edit_bar, text="📝 编辑预设文件",
                       command=self._open_presets_file, width=180).pack(side="right", padx=4)
-        ctk.CTkButton(edit_bar, text="🔄 Reload",
+        ctk.CTkButton(edit_bar, text="🔄 重新载入",
                       command=self._reload_presets, width=110).pack(side="right", padx=4)
 
         tabs = ctk.CTkTabview(wrapper)
@@ -113,7 +113,7 @@ class _VisualToolsDialog:
         else:
             tabs.set("Emphasize by Tier")
 
-        app._setup_dialog(self.dlg, title="Visual Tools",
+        app._setup_dialog(self.dlg, title="视觉工具",
                           default_size=(940, 760), min_size=(820, 600))
 
     # ---------------- Preset file helpers ----------------
@@ -144,7 +144,7 @@ class _VisualToolsDialog:
             else:
                 subprocess.Popen(["xdg-open", self.presets_path])
         except Exception as e:
-            messagebox.showerror("Open failed", str(e))
+            messagebox.showerror("打开失败", str(e))
 
     def _reload_presets(self):
         self.presets, self.palettes = load_visual_presets(self.presets_path)
@@ -162,8 +162,8 @@ class _VisualToolsDialog:
         self._em_plan = EmphasisStyler(presets=self.presets, overrides=self.overrides).plan(self.app.lines)
 
         ctk.CTkLabel(parent,
-                     text="High-tier items (Uniques, Special Currency, etc.) get the loudest "
-                          "treatment. Low-tier items dim down. Hide blocks are left alone.",
+                     text="高价值物品（传奇、特殊通货等）会得到最醒目的效果，"
+                          "低价值物品会压暗。隐藏块不会被改动。",
                      text_color=pal.text_muted, wraplength=860, justify="left",
                      ).pack(anchor="w", pady=(8, 6))
 
@@ -171,7 +171,7 @@ class _VisualToolsDialog:
         # color edits in the JSON show up immediately.
         preview_frame = ctk.CTkFrame(parent, fg_color=pal.panel_alt)
         preview_frame.pack(fill="x", pady=8)
-        ctk.CTkLabel(preview_frame, text="Tier presets",
+        ctk.CTkLabel(preview_frame, text="档次预设",
                      font=("Segoe UI Semibold", 11)).pack(anchor="w", padx=8, pady=(6, 2))
 
         self._em_swatch_row = ctk.CTkFrame(preview_frame, fg_color="transparent")
@@ -191,9 +191,9 @@ class _VisualToolsDialog:
         cols = ("line", "tier", "header")
         self._em_tree = ttk.Treeview(tf, columns=cols, show="headings",
                                       height=12, selectmode="browse")
-        self._em_tree.heading("line", text="Line")
-        self._em_tree.heading("tier", text="Tier")
-        self._em_tree.heading("header", text="Block header")
+        self._em_tree.heading("line", text="行号")
+        self._em_tree.heading("tier", text="档次")
+        self._em_tree.heading("header", text="规则块首行")
         self._em_tree.column("line", width=70, anchor="e")
         self._em_tree.column("tier", width=90, anchor="w")
         self._em_tree.column("header", width=720, anchor="w")
@@ -207,17 +207,17 @@ class _VisualToolsDialog:
         # Buttons
         btn_row = ctk.CTkFrame(parent, fg_color="transparent")
         btn_row.pack(fill="x", pady=(8, 0))
-        ctk.CTkButton(btn_row, text="Apply Emphasis",
+        ctk.CTkButton(btn_row, text="应用强化",
                       command=self._apply_emphasis, width=200,
                       fg_color=pal.accent, hover_color=pal.accent_hover,
                       text_color=pal.accent_text).pack(side="right", padx=4)
-        ctk.CTkButton(btn_row, text="Close", command=self.dlg.destroy, width=120,
+        ctk.CTkButton(btn_row, text="关闭", command=self.dlg.destroy, width=120,
                       fg_color=pal.panel_alt, hover_color=pal.border,
                       text_color=pal.text).pack(side="right", padx=4)
 
     def _apply_emphasis(self):
         if not self._em_plan:
-            messagebox.showinfo("Nothing to do",
+            messagebox.showinfo("没有需要处理的内容",
                                 "No restyle-able blocks were found in this filter.")
             return
         n = self._commit_plan(self._em_plan, "Emphasis by tier")
@@ -252,11 +252,11 @@ class _VisualToolsDialog:
                                bg=bg, fg=swatch_color, cursor="hand2",
                                font=("Segoe UI Semibold", 11))
             top_lbl.pack(pady=(6, 0))
-            mid_lbl = tk.Label(inner, text=f"{counts.get(tier, 0)} block(s)",
+            mid_lbl = tk.Label(inner, text=f"{counts.get(tier, 0)} 个块",
                                bg=bg, fg=swatch_color, cursor="hand2",
                                font=("Segoe UI", 9))
             mid_lbl.pack()
-            hint_lbl = tk.Label(inner, text="click to edit",
+            hint_lbl = tk.Label(inner, text="点击可编辑",
                                 bg=bg, fg=swatch_color, cursor="hand2",
                                 font=("Segoe UI", 8))
             hint_lbl.pack(side="bottom", pady=(0, 4))
@@ -289,7 +289,7 @@ class _VisualToolsDialog:
     def _update_em_total_label(self):
         total = sum(tier_summary(self._em_plan).values())
         self._em_total_label.configure(
-            text=f"Total blocks to restyle: {total}   (Hide blocks skipped)")
+            text=f"将重排视觉的规则块：{total} 个（隐藏块跳过）")
 
     def _repopulate_emphasis_table(self):
         for i in self._em_tree.get_children():
@@ -317,12 +317,12 @@ class _VisualToolsDialog:
         # Seed input
         seed_row = ctk.CTkFrame(parent, fg_color="transparent")
         seed_row.pack(fill="x", pady=4)
-        ctk.CTkLabel(seed_row, text="Random seed:").pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(seed_row, text="随机种子：").pack(side="left", padx=(0, 6))
         self._seed_var = tk.StringVar(value=str(random.randint(1, 99_999_999)))
         ctk.CTkEntry(seed_row, textvariable=self._seed_var, width=140).pack(side="left")
-        ctk.CTkButton(seed_row, text="🎲 New seed",
+        ctk.CTkButton(seed_row, text="🎲 换一个种子",
                       command=self._new_seed, width=120).pack(side="left", padx=(6, 0))
-        ctk.CTkButton(seed_row, text="🔄 Re-plan",
+        ctk.CTkButton(seed_row, text="🔄 重新规划",
                       command=self._replan_random, width=120).pack(side="left", padx=(6, 0))
 
         # Palette preview — rebuilt on reload.
@@ -341,9 +341,9 @@ class _VisualToolsDialog:
         cols = ("line", "tier", "header")
         self._rand_tree = ttk.Treeview(tf, columns=cols, show="headings",
                                         height=12, selectmode="browse")
-        self._rand_tree.heading("line", text="Line")
-        self._rand_tree.heading("tier", text="Tier")
-        self._rand_tree.heading("header", text="Block header")
+        self._rand_tree.heading("line", text="行号")
+        self._rand_tree.heading("tier", text="档次")
+        self._rand_tree.heading("header", text="规则块首行")
         self._rand_tree.column("line", width=70, anchor="e")
         self._rand_tree.column("tier", width=90, anchor="w")
         self._rand_tree.column("header", width=720, anchor="w")
@@ -358,11 +358,11 @@ class _VisualToolsDialog:
         # Buttons
         btn_row = ctk.CTkFrame(parent, fg_color="transparent")
         btn_row.pack(fill="x", pady=(8, 0))
-        ctk.CTkButton(btn_row, text="Apply Randomization",
+        ctk.CTkButton(btn_row, text="应用随机化",
                       command=self._apply_random, width=220,
                       fg_color=pal.accent, hover_color=pal.accent_hover,
                       text_color=pal.accent_text).pack(side="right", padx=4)
-        ctk.CTkButton(btn_row, text="Close", command=self.dlg.destroy, width=120,
+        ctk.CTkButton(btn_row, text="关闭", command=self.dlg.destroy, width=120,
                       fg_color=pal.panel_alt, hover_color=pal.border,
                       text_color=pal.text).pack(side="right", padx=4)
 
@@ -389,7 +389,7 @@ class _VisualToolsDialog:
 
     def _populate_palette_swatches(self):
         self._rand_pal_header.configure(
-            text=f"Curated palettes available: {len(self.palettes)}")
+            text=f"可用配色方案：{len(self.palettes)} 套")
         for child in self._rand_swatch_row.winfo_children():
             child.destroy()
         for p in self.palettes:
@@ -405,7 +405,7 @@ class _VisualToolsDialog:
 
     def _apply_random(self):
         if not self._rand_plan:
-            messagebox.showinfo("Nothing to do",
+            messagebox.showinfo("没有需要处理的内容",
                                 "No restyle-able blocks were found in this filter.")
             return
         n = self._commit_plan(self._rand_plan, f"Randomizer (seed {self._seed_var.get()})")
@@ -416,10 +416,10 @@ class _VisualToolsDialog:
 
     def _commit_plan(self, plan: List[StyleChange], what: str) -> Optional[int]:
         if not messagebox.askyesno(
-            "Confirm restyle",
-            f"{what} will rewrite {len(plan)} block(s) in:\n  "
+            "确认重排视觉",
+            f"{what} 将重写 {len(plan)} 个规则块，文件：\n  "
             f"{os.path.basename(self.app.filter_path)}\n\n"
-            "A backup is saved automatically. Proceed?",
+            "会自动先保存一份备份。是否继续？",
         ):
             return None
 
@@ -432,12 +432,12 @@ class _VisualToolsDialog:
                 max_backups=self.app.settings.max_backups,
             )
         except Exception as e:
-            messagebox.showerror("Save error", str(e))
+            messagebox.showerror("保存失败", str(e))
             return None
 
         self.app.lines = new_lines
         self.app.refresh_filter_data()
-        self.app._set_status(f"{what}: rewrote {len(plan)} block(s), saved with backup.")
+        self.app._set_status(f"{what}：已重写 {len(plan)} 个规则块，并已备份保存。")
         return len(plan)
 
 

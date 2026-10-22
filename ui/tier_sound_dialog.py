@@ -17,6 +17,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
+from core.zh import mode_label, mode_value, conf_label, conf_value
 
 from economy_tier.controller import EconomyTierController, Mode
 from economy_tier.economy_tier_data import TIER_ORDER
@@ -47,12 +48,12 @@ _TIER_HINT = {
 def open_tier_sound_dialog(app) -> None:
     """Entry point from the Sounds menu."""
     if not getattr(app, "filter_path", "") or not getattr(app, "lines", None):
-        messagebox.showinfo("No filter", "Load a filter file first.")
+        messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
         return
     try:
         controller = EconomyTierController(app.filter_path, app.lines)
     except Exception as exc:  # pragma: no cover - defensive
-        messagebox.showerror("Tier Sounds", f"Could not start feature:\n{exc}")
+        messagebox.showerror("档次音效", f"Could not start feature:\n{exc}")
         return
     if not controller.available:
         messagebox.showwarning(
@@ -73,7 +74,7 @@ class _TierSoundDialog:
         wrapper = ctk.CTkFrame(self.dlg, fg_color=self.pal.panel)
         wrapper.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(wrapper, text="Set Tier Sounds", font=("Segoe UI Semibold", 14)).pack(
+        ctk.CTkLabel(wrapper, text="按档次设置音效", font=("Segoe UI Semibold", 14)).pack(
             anchor="w"
         )
         ctk.CTkLabel(
@@ -91,20 +92,20 @@ class _TierSoundDialog:
         # Mode + confidence selectors (which blocks count as each tier).
         row = ctk.CTkFrame(wrapper, fg_color=self.pal.panel_alt)
         row.pack(fill="x", pady=(0, 8))
-        ctk.CTkLabel(row, text="Mode:").pack(side="left", padx=(8, 4), pady=8)
-        self.mode_var = tk.StringVar(value=Mode.APPLY.value)
+        ctk.CTkLabel(row, text="模式：").pack(side="left", padx=(8, 4), pady=8)
+        self.mode_var = tk.StringVar(value=mode_label(Mode.APPLY.value))
         ctk.CTkOptionMenu(
             row,
-            values=_MODES,
+            values=[mode_label(m) for m in _MODES],
             variable=self.mode_var,
             command=lambda _v: self._refresh(),
             width=320,
         ).pack(side="left", padx=4, pady=8)
-        ctk.CTkLabel(row, text="Min confidence:").pack(side="left", padx=(16, 4), pady=8)
-        self.conf_var = tk.StringVar(value="medium")
+        ctk.CTkLabel(row, text="最低置信度：").pack(side="left", padx=(16, 4), pady=8)
+        self.conf_var = tk.StringVar(value=conf_label("medium"))
         ctk.CTkOptionMenu(
             row,
-            values=_CONF,
+            values=[conf_label(c) for c in _CONF],
             variable=self.conf_var,
             command=lambda _v: self._refresh(),
             width=110,
@@ -131,18 +132,18 @@ class _TierSoundDialog:
                 anchor="w",
                 text_color=self.pal.text_muted,
             ).pack(side="left")
-            count_lbl = ctk.CTkLabel(cell, text="… blocks", width=110, anchor="w")
+            count_lbl = ctk.CTkLabel(cell, text="… 个规则块", width=110, anchor="w")
             count_lbl.pack(side="left")
             self._count_labels[tier] = count_lbl
             ctk.CTkButton(
                 cell,
-                text="🔊 Set Sound…",
+                text="🔊 设置音效…",
                 width=130,
                 command=lambda t=tier: self._set_sound(t),
             ).pack(side="left", padx=4)
             ctk.CTkButton(
                 cell,
-                text="Remove",
+                text="移除",
                 width=90,
                 fg_color=self.pal.panel_alt,
                 hover_color=self.pal.border,
@@ -154,7 +155,7 @@ class _TierSoundDialog:
         btns.pack(fill="x", pady=(8, 0))
         ctk.CTkButton(
             btns,
-            text="Refresh",
+            text="刷新",
             command=self._refresh,
             width=120,
             fg_color=self.pal.panel_alt,
@@ -163,7 +164,7 @@ class _TierSoundDialog:
         ).pack(side="right", padx=4)
         ctk.CTkButton(
             btns,
-            text="Close",
+            text="关闭",
             command=self.dlg.destroy,
             width=110,
             fg_color=self.pal.panel_alt,
@@ -174,14 +175,14 @@ class _TierSoundDialog:
         self._mapping: dict[str, list[int]] = {}
         self._refresh()
         app._setup_dialog(
-            self.dlg, title="Set Tier Sounds", default_size=(820, 560), min_size=(720, 460)
+            self.dlg, title="按档次设置音效", default_size=(820, 560), min_size=(720, 460)
         )
 
     # ---------------- helpers ----------------
 
     def _mode(self) -> Mode:
         try:
-            return Mode(self.mode_var.get())
+            return Mode(mode_value(self.mode_var.get()))
         except ValueError:
             return Mode.APPLY
 
@@ -190,22 +191,22 @@ class _TierSoundDialog:
         text = "".join(self.app.lines)
         try:
             self._mapping = self.controller.tier_block_starts(
-                text, self._mode(), self.conf_var.get()
+                text, self._mode(), conf_value(self.conf_var.get())
             )
         except Exception as exc:  # pragma: no cover - defensive
-            messagebox.showerror("Tier Sounds", str(exc))
+            messagebox.showerror("档次音效", str(exc))
             return
         for tier, lbl in self._count_labels.items():
             n = len(self._mapping.get(tier, []))
-            lbl.configure(text=f"{n} block(s)")
+            lbl.configure(text=f"{n} 个规则块")
 
     def _set_sound(self, tier: str):
         starts = self._mapping.get(tier, [])
         if not starts:
-            messagebox.showinfo("No blocks", f"No blocks are classified as tier {tier}.")
+            messagebox.showinfo("没有规则块", f"No blocks are classified as tier {tier}.")
             return
         path = filedialog.askopenfilename(
-            title=f"Choose a sound for tier {tier}", filetypes=_AUDIO_TYPES
+            title=f"为 {tier} 档次选择音效", filetypes=_AUDIO_TYPES
         )
         if not path:
             return
@@ -218,7 +219,7 @@ class _TierSoundDialog:
         try:
             n = self.app.apply_custom_sound_to_blocks(starts, path)
         except Exception as exc:
-            messagebox.showerror("Could not set sound", str(exc))
+            messagebox.showerror("无法设置音效", str(exc))
             return
         self.app._set_status(f"Tier {tier}: set sound on {n} block(s) (backup made).")
         self._refresh()
@@ -226,7 +227,7 @@ class _TierSoundDialog:
     def _remove_sound(self, tier: str):
         starts = self._mapping.get(tier, [])
         if not starts:
-            messagebox.showinfo("No blocks", f"No blocks are classified as tier {tier}.")
+            messagebox.showinfo("没有规则块", f"No blocks are classified as tier {tier}.")
             return
         if not messagebox.askyesno(
             "Remove tier sound",
@@ -236,7 +237,7 @@ class _TierSoundDialog:
         try:
             n = self.app.remove_sound_from_blocks(starts)
         except Exception as exc:
-            messagebox.showerror("Could not remove sound", str(exc))
+            messagebox.showerror("无法移除音效", str(exc))
             return
         self.app._set_status(f"Tier {tier}: removed sound from {n} block(s) (backup made).")
         self._refresh()

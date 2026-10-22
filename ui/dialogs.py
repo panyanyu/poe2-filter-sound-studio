@@ -57,7 +57,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Color preview
-        preview_label = ctk.CTkLabel(main_frame, text="Preview", font=("Arial", 12, "bold"))
+        preview_label = ctk.CTkLabel(main_frame, text="预览", font=("Arial", 12, "bold"))
         preview_label.pack(pady=(0, 5))
 
         self.preview_frame = ctk.CTkFrame(main_frame, width=400, height=80, corner_radius=8)
@@ -66,7 +66,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
 
         self.preview_text = ctk.CTkLabel(
             self.preview_frame,
-            text="Sample Item Text",
+            text="示例物品名称",
             font=("Arial", 16, "bold")
         )
         self.preview_text.place(relx=0.5, rely=0.5, anchor="center")
@@ -75,7 +75,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         rgb_frame = ctk.CTkFrame(main_frame)
         rgb_frame.pack(fill="x", pady=(0, 10))
 
-        ctk.CTkLabel(rgb_frame, text="RGB Color:", width=100, anchor="w").pack(side="left", padx=(0, 10))
+        ctk.CTkLabel(rgb_frame, text="RGB 颜色：", width=100, anchor="w").pack(side="left", padx=(0, 10))
 
         self.rgb_button = ctk.CTkButton(
             rgb_frame,
@@ -89,7 +89,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         alpha_frame = ctk.CTkFrame(main_frame)
         alpha_frame.pack(fill="x", pady=(0, 10))
 
-        ctk.CTkLabel(alpha_frame, text="Opacity (Alpha):", width=100, anchor="w").pack(side="left", padx=(0, 10))
+        ctk.CTkLabel(alpha_frame, text="不透明度（Alpha）：", width=100, anchor="w").pack(side="left", padx=(0, 10))
 
         self.alpha_slider = ctk.CTkSlider(
             alpha_frame,
@@ -122,7 +122,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
 
         ctk.CTkButton(
             button_frame,
-            text="Cancel",
+            text="取消",
             command=self._on_cancel,
             width=100,
             fg_color="gray"
@@ -130,7 +130,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
 
         ctk.CTkButton(
             button_frame,
-            text="Apply",
+            text="应用",
             command=self._on_apply,
             width=100
         ).pack(side="right", padx=5)
@@ -143,7 +143,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         # Open color chooser
         color = colorchooser.askcolor(
             color=initial_hex,
-            title="Choose RGB Color",
+            title="选择 RGB 颜色",
             parent=self
         )
 
@@ -238,7 +238,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         # Title
         title_label = ctk.CTkLabel(
             main_frame,
-            text="POE2 Item Preview",
+            text="流放2 物品预览",
             font=("Arial", 16, "bold")
         )
         title_label.pack(pady=(0, 10))
@@ -246,7 +246,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         # Description
         desc_label = ctk.CTkLabel(
             main_frame,
-            text="This is how the item will appear in-game with your colors:",
+            text="这是该物品在游戏内使用当前颜色后的效果：",
             font=("Arial", 11)
         )
         desc_label.pack(pady=(0, 20))
@@ -319,7 +319,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         info_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         info_frame.pack(fill="x")
 
-        info_text = f"Text: RGBA{text_rgba}\nBorder: RGBA{border_rgba}\nBackground: RGBA{bg_rgba}"
+        info_text = f"文字：RGBA{text_rgba}\n边框：RGBA{border_rgba}\n背景：RGBA{bg_rgba}"
         ctk.CTkLabel(
             info_frame,
             text=info_text,
@@ -330,7 +330,7 @@ class ItemPreviewDialog(ctk.CTkToplevel):
         # Close button
         ctk.CTkButton(
             main_frame,
-            text="Close",
+            text="关闭",
             command=self.destroy,
             width=100
         ).pack(pady=(10, 0))
