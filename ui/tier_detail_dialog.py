@@ -29,16 +29,19 @@ from core.user_overrides import (
     UserOverrides, BlockOverride, block_signature, save_overrides,
     friendly_block_name,
 )
+from core.zh import (
+    NONE_LABEL, color_label, color_value, shape_label, shape_value,
+)
 from ui.dialogs import ColorPickerDialog
 
 
 _TIER_LABELS = {
-    ValueTier.MYTHIC: "Mythic",
-    ValueTier.TOP: "Top",
-    ValueTier.HIGH: "High",
-    ValueTier.MID: "Mid",
-    ValueTier.LOW: "Low",
-    ValueTier.JUNK: "Junk",
+    ValueTier.MYTHIC: "神话",
+    ValueTier.TOP: "顶级",
+    ValueTier.HIGH: "高档",
+    ValueTier.MID: "中档",
+    ValueTier.LOW: "低档",
+    ValueTier.JUNK: "垃圾",
 }
 
 # Tiers the user can move a block to (HIDDEN is special — we don't expose it).
@@ -47,7 +50,7 @@ _REASSIGN_TIERS = (
     ValueTier.MID, ValueTier.LOW, ValueTier.JUNK,
 )
 
-_NONE_LABEL = "(none)"
+_NONE_LABEL = NONE_LABEL
 
 
 def open_tier_detail(app, tier: ValueTier, plan: List[StyleChange],
@@ -86,7 +89,7 @@ class _TierDetailDialog:
 
         app._setup_dialog(
             self.dlg,
-            title=f"Tier: {_TIER_LABELS[tier]}",
+            title=f"档次：{_TIER_LABELS[tier]}",
             default_size=(960, 800), min_size=(840, 660),
         )
 
@@ -98,9 +101,9 @@ class _TierDetailDialog:
         with_override = sum(1 for c in in_tier if c.has_override)
         ctk.CTkLabel(
             parent,
-            text=f"{_TIER_LABELS[self.tier]} tier — {len(in_tier)} block(s), "
-                 f"{with_override} with overrides",
-            font=("Segoe UI Semibold", 14),
+            text=f"{_TIER_LABELS[self.tier]} 档次 — {len(in_tier)} 个块，"
+                 f"其中 {with_override} 个有自定义覆盖",
+            font=("Microsoft YaHei UI", 14, "bold"),
         ).pack(anchor="w")
         ctk.CTkLabel(
             parent,
@@ -120,8 +123,8 @@ class _TierDetailDialog:
         left = ctk.CTkFrame(container, fg_color="transparent")
         left.pack(side="left", fill="y", padx=8, pady=8)
 
-        ctk.CTkLabel(left, text="Preview",
-                     font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        ctk.CTkLabel(left, text="预览",
+                     font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
 
         # Use a raw tk.Frame for the preview so we can drive its bg colour
         # directly without CTk theme interference.
@@ -131,13 +134,13 @@ class _TierDetailDialog:
         self._preview_inner = tk.Frame(self._preview_outer, bd=0)
         self._preview_inner.pack(fill="both", expand=True)
         self._preview_label = tk.Label(
-            self._preview_inner, text="Mirror of Kalandra",
-            font=("Segoe UI Semibold", 14),
+            self._preview_inner, text="卡兰德的魔镜",
+            font=("Microsoft YaHei UI", 14, "bold"),
         )
         self._preview_label.pack(expand=True)
         self._preview_extra = tk.Label(
             self._preview_inner, text="",
-            font=("Segoe UI", 9),
+            font=("Microsoft YaHei UI", 9),
         )
         self._preview_extra.pack(side="bottom", fill="x")
 
@@ -145,8 +148,8 @@ class _TierDetailDialog:
         right = ctk.CTkFrame(container, fg_color="transparent")
         right.pack(side="left", fill="both", expand=True, padx=(8, 8), pady=8)
 
-        ctk.CTkLabel(right, text="Style",
-                     font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        ctk.CTkLabel(right, text="样式",
+                     font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
 
         # Color rows.
         self._build_color_row(right, "Text color", "text_color")
@@ -156,7 +159,7 @@ class _TierDetailDialog:
         # Font size.
         font_row = ctk.CTkFrame(right, fg_color="transparent")
         font_row.pack(fill="x", pady=4)
-        ctk.CTkLabel(font_row, text="Font size:", width=110, anchor="w").pack(side="left")
+        ctk.CTkLabel(font_row, text="字体大小：", width=110, anchor="w").pack(side="left")
         self._font_var = tk.IntVar(value=self.draft_style.font_size or 34)
         self._font_value_label = ctk.CTkLabel(font_row, text=str(self._font_var.get()), width=40)
         font_slider = ctk.CTkSlider(
@@ -170,18 +173,18 @@ class _TierDetailDialog:
         # PlayEffect.
         effect_row = ctk.CTkFrame(right, fg_color="transparent")
         effect_row.pack(fill="x", pady=4)
-        ctk.CTkLabel(effect_row, text="PlayEffect:", width=110, anchor="w").pack(side="left")
+        ctk.CTkLabel(effect_row, text="掉落光柱（PlayEffect）：", width=110, anchor="w").pack(side="left")
         effect_color = self.draft_style.play_effect[0] if self.draft_style.play_effect else _NONE_LABEL
         is_temp = self.draft_style.play_effect[1] if self.draft_style.play_effect else False
-        self._effect_var = tk.StringVar(value=effect_color)
+        self._effect_var = tk.StringVar(value=color_label(effect_color))
         ctk.CTkOptionMenu(
-            effect_row, values=[_NONE_LABEL] + list(POE2_NAMED_COLORS),
+            effect_row, values=[_NONE_LABEL] + [color_label(c) for c in POE2_NAMED_COLORS],
             variable=self._effect_var, command=lambda _v: self._on_style_field_change(),
             width=120,
         ).pack(side="left", padx=(4, 8))
         self._temp_var = tk.BooleanVar(value=is_temp)
         ctk.CTkCheckBox(
-            effect_row, text="Temp (only while map is open)",
+            effect_row, text="临时（仅地图期间生效）",
             variable=self._temp_var,
             command=self._on_style_field_change,
         ).pack(side="left")
@@ -189,23 +192,23 @@ class _TierDetailDialog:
         # MinimapIcon.
         map_row = ctk.CTkFrame(right, fg_color="transparent")
         map_row.pack(fill="x", pady=4)
-        ctk.CTkLabel(map_row, text="MinimapIcon:", width=110, anchor="w").pack(side="left")
+        ctk.CTkLabel(map_row, text="小地图图标：", width=110, anchor="w").pack(side="left")
         map_size, map_color, map_shape = ("0", _NONE_LABEL, _NONE_LABEL)
         if self.draft_style.minimap:
             sz, c, sh = self.draft_style.minimap
             map_size, map_color, map_shape = str(sz), c, sh
         self._map_size_var = tk.StringVar(value=map_size)
-        self._map_color_var = tk.StringVar(value=map_color)
-        self._map_shape_var = tk.StringVar(value=map_shape)
+        self._map_color_var = tk.StringVar(value=color_label(map_color))
+        self._map_shape_var = tk.StringVar(value=shape_label(map_shape))
         ctk.CTkOptionMenu(map_row, values=["0", "1", "2"],
                           variable=self._map_size_var,
                           command=lambda _v: self._on_style_field_change(),
                           width=60).pack(side="left", padx=(4, 4))
-        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + list(POE2_NAMED_COLORS),
+        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + [color_label(c) for c in POE2_NAMED_COLORS],
                           variable=self._map_color_var,
                           command=lambda _v: self._on_style_field_change(),
                           width=110).pack(side="left", padx=(0, 4))
-        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + list(POE2_MINIMAP_SHAPES),
+        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + [shape_label(c) for c in POE2_MINIMAP_SHAPES],
                           variable=self._map_shape_var,
                           command=lambda _v: self._on_style_field_change(),
                           width=140).pack(side="left")
@@ -213,12 +216,12 @@ class _TierDetailDialog:
         # Quick actions.
         actions = ctk.CTkFrame(right, fg_color="transparent")
         actions.pack(fill="x", pady=(8, 0))
-        ctk.CTkButton(actions, text="Reset to default",
+        ctk.CTkButton(actions, text="恢复默认",
                       command=self._reset_to_default, width=160,
                       fg_color=pal.panel_alt, hover_color=pal.border,
                       text_color=pal.text).pack(side="left", padx=4)
         if self.tier in self.overrides.tier_presets:
-            ctk.CTkButton(actions, text="Remove tier override",
+            ctk.CTkButton(actions, text="移除档次覆盖",
                           command=self._remove_tier_override, width=200,
                           fg_color=pal.panel_alt, hover_color=pal.border,
                           text_color=pal.text).pack(side="left", padx=4)
@@ -236,14 +239,14 @@ class _TierDetailDialog:
         swatch.pack(side="left", padx=(4, 6))
         swatch.pack_propagate(False)
 
-        value_label = ctk.CTkLabel(row, text="(none)",
+        value_label = ctk.CTkLabel(row, text="（无）",
                                    text_color=pal.text_muted, width=160, anchor="w")
         value_label.pack(side="left")
 
-        ctk.CTkButton(row, text="Pick…",
+        ctk.CTkButton(row, text="选择…",
                       command=lambda a=attr: self._pick_color(a),
                       width=70).pack(side="left", padx=(4, 0))
-        ctk.CTkButton(row, text="Clear",
+        ctk.CTkButton(row, text="清除",
                       command=lambda a=attr: self._clear_color(a),
                       width=70,
                       fg_color=pal.panel_alt, hover_color=pal.border,
@@ -262,28 +265,28 @@ class _TierDetailDialog:
         header_row.pack(fill="x", pady=(8, 2))
         self._list_title = ctk.CTkLabel(
             header_row,
-            text=f"Items in {_TIER_LABELS[self.tier]} tier",
-            font=("Segoe UI Semibold", 11),
+            text=f"{_TIER_LABELS[self.tier]} 档次的物品",
+            font=("Microsoft YaHei UI", 11, "bold"),
         )
         self._list_title.pack(side="left", padx=(0, 12))
-        ctk.CTkLabel(header_row, text="Search:",
+        ctk.CTkLabel(header_row, text="搜索：",
                      text_color=pal.text_muted).pack(side="left", padx=(4, 4))
         self._search_var = tk.StringVar()
         search_entry = ctk.CTkEntry(
             header_row, textvariable=self._search_var, width=260,
-            placeholder_text="e.g. 'divine', 'belt', 'unique', 'waystone'",
+            placeholder_text="例如：神圣石、腰带、传奇、引路石",
         )
         search_entry.pack(side="left")
         self._search_var.trace_add("write", lambda *_: self._refresh_block_list())
-        ctk.CTkButton(header_row, text="Clear",
+        ctk.CTkButton(header_row, text="清除",
                       command=lambda: self._search_var.set(""),
                       width=70,
                       fg_color=pal.panel_alt, hover_color=pal.border,
                       text_color=pal.text).pack(side="left", padx=(4, 0))
         self._search_hint = ctk.CTkLabel(
             header_row,
-            text="(empty = this tier only · typed = searches every tier)",
-            text_color=pal.text_muted, font=("Segoe UI", 9),
+            text="（留空＝仅本档次 · 输入内容＝搜索所有档次）",
+            text_color=pal.text_muted, font=("Microsoft YaHei UI", 9),
         )
         self._search_hint.pack(side="left", padx=(8, 0))
 
@@ -294,10 +297,10 @@ class _TierDetailDialog:
             tf, columns=cols, show="headings",
             height=10, selectmode="browse",
         )
-        self._block_tree.heading("item", text="Item")
-        self._block_tree.heading("tier", text="Tier")
-        self._block_tree.heading("from", text="Note")
-        self._block_tree.heading("line", text="Line")
+        self._block_tree.heading("item", text="物品")
+        self._block_tree.heading("tier", text="档次")
+        self._block_tree.heading("from", text="备注")
+        self._block_tree.heading("line", text="行号")
         self._block_tree.column("item", width=520, anchor="w")
         self._block_tree.column("tier", width=90, anchor="w")
         self._block_tree.column("from", width=120, anchor="w")
@@ -312,12 +315,12 @@ class _TierDetailDialog:
         self._reassign_menu = tk.Menu(self._block_tree, tearoff=False)
         for t in _REASSIGN_TIERS:
             self._reassign_menu.add_command(
-                label=f"Move to {_TIER_LABELS[t]}",
+                label=f"移动到 {_TIER_LABELS[t]}",
                 command=lambda dest=t: self._reassign_selected(dest),
             )
         self._reassign_menu.add_separator()
         self._reassign_menu.add_command(
-            label="Reset to heuristic tier",
+            label="移回自动判定档次",
             command=lambda: self._reassign_selected(None),
         )
 
@@ -326,7 +329,7 @@ class _TierDetailDialog:
 
         btn_row = ctk.CTkFrame(parent, fg_color="transparent")
         btn_row.pack(fill="x", pady=(2, 0))
-        ctk.CTkButton(btn_row, text="Move selected to…",
+        ctk.CTkButton(btn_row, text="把选中项移动到…",
                       command=self._open_reassign_menu_for_selected,
                       width=180).pack(side="left", padx=4)
         self._count_label = ctk.CTkLabel(btn_row, text="",
@@ -345,11 +348,11 @@ class _TierDetailDialog:
         btn_row.pack(fill="x", pady=(10, 0))
 
         ctk.CTkButton(
-            btn_row, text="Close", command=self._on_cancel, width=120,
+            btn_row, text="关闭", command=self._on_cancel, width=120,
             fg_color=pal.panel_alt, hover_color=pal.border, text_color=pal.text,
         ).pack(side="right", padx=4)
         ctk.CTkButton(
-            btn_row, text="Save tier styling",
+            btn_row, text="保存档次样式",
             command=self._save_and_close, width=180,
             fg_color=pal.accent, hover_color=pal.accent_hover,
             text_color=pal.accent_text,
@@ -365,7 +368,7 @@ class _TierDetailDialog:
             self._refresh_color_swatches()
             self._refresh_preview()
 
-        ColorPickerDialog(self.dlg, title=f"Pick {attr.replace('_', ' ')}",
+        ColorPickerDialog(self.dlg, title=f"选择{attr.replace('_', ' ')}",
                           initial_color=initial, callback=on_picked)
 
     def _clear_color(self, attr: str):
@@ -382,7 +385,7 @@ class _TierDetailDialog:
 
     def _on_style_field_change(self):
         # PlayEffect.
-        eff = self._effect_var.get()
+        eff = color_value(self._effect_var.get())
         if eff == _NONE_LABEL:
             self.draft_style.play_effect = None
         else:
@@ -390,8 +393,8 @@ class _TierDetailDialog:
 
         # MinimapIcon. If any of the three is "(none)" we treat the whole thing
         # as unset — POE2 needs all three to be a valid icon.
-        color = self._map_color_var.get()
-        shape = self._map_shape_var.get()
+        color = color_value(self._map_color_var.get())
+        shape = shape_value(self._map_shape_var.get())
         if color == _NONE_LABEL or shape == _NONE_LABEL:
             self.draft_style.minimap = None
         else:
@@ -410,12 +413,12 @@ class _TierDetailDialog:
         self._font_var.set(self.draft_style.font_size or 34)
         self._font_value_label.configure(text=str(self._font_var.get()))
         eff = self.draft_style.play_effect
-        self._effect_var.set(eff[0] if eff else _NONE_LABEL)
+        self._effect_var.set(color_label(eff[0]) if eff else _NONE_LABEL)
         self._temp_var.set(bool(eff[1]) if eff else False)
         mi = self.draft_style.minimap
         self._map_size_var.set(str(mi[0]) if mi else "0")
-        self._map_color_var.set(mi[1] if mi else _NONE_LABEL)
-        self._map_shape_var.set(mi[2] if mi else _NONE_LABEL)
+        self._map_color_var.set(color_label(mi[1]) if mi else _NONE_LABEL)
+        self._map_shape_var.set(shape_label(mi[2]) if mi else _NONE_LABEL)
         self._refresh_color_swatches()
         self._refresh_preview()
 
@@ -437,7 +440,7 @@ class _TierDetailDialog:
                 label.configure(text=f"{rgba[0]}, {rgba[1]}, {rgba[2]}  (a={rgba[3]})")
             else:
                 swatch.configure(bg=self.pal.panel)
-                label.configure(text="(unset — won't be written)")
+                label.configure(text="（未设置 —— 不会写入）")
 
     def _refresh_preview(self):
         s = self.draft_style
@@ -451,7 +454,7 @@ class _TierDetailDialog:
         self._preview_inner.configure(bg=bg)
         self._preview_label.configure(
             bg=bg, fg=text_color,
-            font=("Segoe UI Semibold", font_size),
+            font=("Microsoft YaHei UI", font_size),
         )
         extras = []
         if s.play_effect:
@@ -477,11 +480,11 @@ class _TierDetailDialog:
 
         if in_search:
             self._list_title.configure(
-                text=f"Search results across all tiers (matching '{query}')",
+                text=f"跨所有档次的搜索结果（匹配「{query}」）",
             )
         else:
             self._list_title.configure(
-                text=f"Items in {_TIER_LABELS[self.tier]} tier",
+                text=f"{_TIER_LABELS[self.tier]} 档次的物品",
             )
 
         shown = 0
@@ -517,11 +520,11 @@ class _TierDetailDialog:
 
         if in_search:
             self._count_label.configure(
-                text=f"{shown} match(es) out of {total_pool} items across all tiers"
+                text=f"共 {total_pool} 个物品，匹配到 {shown} 个（覆盖所有档次）"
             )
         else:
             self._count_label.configure(
-                text=f"{shown} block(s) in this tier"
+                text=f"本档次共 {shown} 个规则块"
             )
 
     def _friendly_for(self, start_idx: int, end_idx: int) -> str:
@@ -556,7 +559,7 @@ class _TierDetailDialog:
     def _open_reassign_menu_for_selected(self):
         sel = self._block_tree.focus()
         if not sel:
-            messagebox.showinfo("No block selected",
+            messagebox.showinfo("未选择规则块",
                                 "Click a block in the list first.")
             return
         x = self._block_tree.winfo_rootx() + 60

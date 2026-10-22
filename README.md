@@ -1,307 +1,287 @@
-# POE2 Filter Sound Studio
+# POE2 Filter Sound Studio（流放2 过滤器音效工作台）
 
-POE2 Filter Sound Studio is a desktop tool for editing Path of Exile 2
-`.filter` files. It focuses on custom alert sounds, volume changes, sound-file
-health checks, color rules, and season-to-season sound migration.
+一个用来编辑《流放之路 2》物品过滤器（`.filter`）的 Windows 桌面工具。核心是
+**掉落音效替换 / 音量调整 / 音效文件体检**，另外提供颜色规则编辑、按价值档次
+重排视觉，以及赛季之间的音效迁移。
 
-![Main editor — Witch (Necro Purple) theme](docs/editor-witch-purple.png)
+界面全中文，术语采用国服（WeGame）说法：引路石、通货、普通/魔法/稀有/传奇、
+咒符、符文/灵魂核心、精魂、物品等级、掉落光柱。
 
-> **Want the standalone Windows EXE?** Grab `App_v3.exe` from the
-> [Releases page](https://github.com/panyanyu/poe2-filter-sound-studio/releases)
-> — no Python install required, FFmpeg bundled.
+![主编辑界面](docs/editor-witch-purple.png)
 
-The current source entry point is `main.py`.
+> **想直接用打包好的 exe？** 到
+> [Releases 页面](https://github.com/panyanyu/poe2-filter-sound-studio/releases)
+> 下载 `App_v<N>.exe`，不用装 Python，FFmpeg 已打包在内。
 
-App identity in code:
+源码入口是 `main.py`。
 
-- Name: `POE2 Filter Sound Studio`
-- Version: `2.0.0`
-- Main UI framework: `customtkinter` plus standard `tkinter`
+应用身份信息：
 
-## Screenshots
+- 名称：`POE2 Filter Sound Studio`
+- 版本：`2.0.0`
+- UI 框架：`customtkinter` + 标准 `tkinter`
 
-| Smart Season Migration | Filter Compatibility Check |
+## 界面截图
+
+| 智能赛季迁移 | 过滤器兼容性检查 |
 | :-: | :-: |
-| ![Merge tab](docs/merge-tab.png) | ![Compatibility check](docs/compatibility-check.png) |
-| Transfer custom sounds from an old season filter to a new one via fuzzy matching. | Spot unknown commands and outdated rules; apply migration rules in bulk. |
+| ![迁移页签](docs/merge-tab.png) | ![兼容性检查](docs/compatibility-check.png) |
+| 用模糊匹配把旧赛季的自定义音效搬到新过滤器。 | 找出未知指令和过时语法，批量应用迁移规则。 |
 
-| Edit Text Color | Edit Background Color |
+| 编辑文字颜色 | 编辑背景颜色 |
 | :-: | :-: |
-| ![Text color dialog](docs/color-text.png) | ![Background color dialog](docs/color-background.png) |
-| RGBA picker with live preview of `SetTextColor`. | Same for `SetBackgroundColor`; alpha slider included. |
+| ![文字颜色](docs/color-text.png) | ![背景颜色](docs/color-background.png) |
+| 带实时预览的 RGBA 取色器。 | 背景色同理，含不透明度滑杆。 |
 
-| Make Sounds Unique | Mercenary (Crimson) Theme |
+| 音效去重 | 佣兵（绯红）主题 |
 | :-: | :-: |
-| ![Make sounds unique](docs/make-sounds-unique.png) | ![Editor in crimson theme](docs/editor-mercenary-crimson.png) |
-| Distribute available sound files across visible blocks (1:1, balanced, or random). | Built-in palettes per POE2 class — switch live from the Mode dropdown. |
+| ![音效去重](docs/make-sounds-unique.png) | ![绯红主题](docs/editor-mercenary-crimson.png) |
+| 把可用音效分配到可见规则块（1:1、均衡或纯随机）。 | 按职业配色，可从下拉框随时切换。 |
 
-## What This Tool Does
+## 这个工具能做什么
 
-- Loads POE2 `.filter` files and parses their `Show` and `Hide` blocks.
-- Shows each block in a searchable table with category, rarity, sound, volume,
-  effects, minimap icons, and item context.
-- Replaces, adds, mutes, unmutes, and bulk-edits filter sound rules.
-- Copies selected sound files into the same folder as the loaded filter.
-- Previews custom sound files through several possible audio backends.
-- Edits `SetTextColor`, `SetBorderColor`, and `SetBackgroundColor` rules with an
-  RGBA color picker.
-- Restyles the whole filter by **economy value tier** (SS → F), with an editable
-  per-tier style editor and named presets.
-- Sets **one drop sound for every item in a value tier** at once.
-- Tracks missing and unused sound files in the filter folder.
-- Migrates sounds from an old season filter into a new season filter with fuzzy
-  block matching.
-- Flips individual blocks between **Show** and **Hide** from a dedicated
-  **Item Visibility** tab — no manual text editing.
-- Saves with timestamped backups by default.
+- 加载 POE2 的 `.filter` 文件，解析里面的 `Show` / `Hide` 规则块。
+- 用可搜索的表格展示每个块的分类、稀有度、音效、音量、光柱特效、小地图图标和物品条件。
+- 替换、添加、静音、取消静音音效，并支持批量修改。
+- 把选中的音效文件复制到过滤器所在目录。
+- 用多种音频后端试听音效。
+- 用 RGBA 取色器编辑 `SetTextColor` / `SetBorderColor` / `SetBackgroundColor`。
+- 按**经济价值档次**（SS → F）整表重排视觉，档次样式可编辑、可存命名预设。
+- 一次性给**某个档次内的所有物品**设置同一个掉落音效。
+- 检查过滤器目录里缺失和未被引用的音效文件。
+- 用模糊匹配把旧赛季音效迁移到新赛季过滤器。
+- 在独立的**物品显隐**页签里把规则块切换 **显示 / 隐藏**，不用手动改文本。
+- 默认每次保存都留带时间戳的备份。
 
-## Quick Start
+## 快速开始
 
-### Option 1: Run From Source
+### 方式一：从源码运行
 
-Install Python 3.10 or newer, then install the dependencies:
+需要 Python 3.10 或更新版本，然后安装依赖：
 
 ```powershell
 py -m pip install -r requirements.txt
 ```
 
-That installs the required packages (`customtkinter` for the UI, `jsonschema`
-for the Economy Tier data files) plus the optional audio-preview backends
-(`python-vlc`, `pygame`, `pydub`, `playsound`). You can also install just the
-core UI dependency with `py -m pip install customtkinter jsonschema` — audio
-preview is optional and the rest of the app works without it.
+这会装上必需包（`customtkinter` 负责界面，`jsonschema` 校验经济档次数据）以及
+可选的试听后端（`python-vlc`、`pygame`、`pydub`、`playsound`）。只装核心依赖
+`py -m pip install customtkinter jsonschema` 也能跑，试听是可选能力。
 
-Then start the app:
+启动：
 
 ```powershell
 py main.py
 ```
 
-You can also double-click `run.bat`, which runs:
+也可以双击 `run.bat`，它执行的是：
 
 ```bat
 python main.py
 pause
 ```
 
-### Option 2: Run The Built EXE
+### 方式二：运行打包好的 exe
 
-Build with `build_exe.bat` (see [Building An EXE](#building-an-exe)). The
-output `dist\builds\App_v<N>.exe` is a one-file, windowed Windows executable
-that needs no Python install.
+用 `build_exe.bat` 打包（见[打包 exe](#打包-exe)），产物是
+`dist\builds\App_v<N>.exe`，单文件、无控制台窗口，不需要装 Python。
 
-## POE2 Filter Location
+## POE2 过滤器位置
 
-On Windows, POE2 filters are usually in:
+Windows 上通常在：
 
 ```text
 %USERPROFILE%\Documents\My Games\Path of Exile 2
 ```
 
-The app also checks common OneDrive document paths. Use `File > Open POE2 Filter
-Folder` if you want the app to open the detected folder.
+程序也会检查常见的 OneDrive 文档路径。用 `文件 > 打开流放2过滤器目录` 可以直接
+打开检测到的目录。
 
-For custom sounds to work in-game, the referenced sound files should be in the
-same folder as the `.filter` file unless the filter explicitly uses a valid
-relative path.
+想让自定义音效在游戏里生效，音效文件应放在 `.filter` 同目录下，除非过滤器里写的
+是合法的相对路径。
 
-## Main Editor Workflow
+## 主编辑流程
 
-1. Open the app.
-2. Click `Load Filter File` or use `File > Open Filter`.
-3. Select a `.filter` file.
-4. Use the category sidebar, search box, and table to find the blocks you care
-   about.
-5. Select a row and edit sound, volume, or colors.
-6. Most edits save immediately and create a backup when backups are enabled.
+1. 打开程序。
+2. 点左上角 `📂 加载过滤器`，或走 `文件 > 打开过滤器`。
+3. 选一个 `.filter` 文件。
+4. 用左侧分类栏、搜索框和表格定位要改的规则块。
+5. 选中一行，修改音效、音量或颜色。
+6. 多数修改会立即保存（开启备份时会先建备份）。
 
-The main table columns are:
+表格的 10 列：
 
-- `Category`: FilterBlade or NeverSink section name, when the filter contains
-  section comments.
-- `Rarity`: Parsed `Rarity` rules, or `Any rarity` when the block has no `Rarity` line (currency, waystones, etc. that match by `BaseType`/`Class`).
-- `Type`: `Custom`, `Play`, or `None`.
-- `Sound / ID`: Sound filename for `CustomAlertSound`, sound ID for
-  `PlayAlertSound`, or `No sound`.
-- `Vol`: Sound volume when present.
-- `Effect`: Short form of the `PlayEffect` rule.
-- `Minimap`: Short form of the `MinimapIcon` rule.
-- `Item Context`: Relevant criteria such as `Class`, `BaseType`, `ItemLevel`,
-  `SetFontSize`, colors, effects, and minimap rules.
+- `分类`：过滤器注释里的章节名（FilterBlade / NeverSink 风格）。
+- `物品`：`BaseType` / `Class` 等条件摘要；没有条件时显示「（无条件）」。
+- `档次`：按价值推断的档次（神话 / 顶级 / 高档 / 中档 / 低档 / 垃圾 / 隐藏）。
+- `稀有度`：解析出的 `Rarity`；没有该行时显示「任意稀有度」（通货、引路石这类
+  靠 `BaseType`/`Class` 匹配的块）。
+- `类型`：自定义音效 / 内置音效 / 无音效。
+- `音效 / ID`：`CustomAlertSound` 的文件名，或 `PlayAlertSound` 的音效编号。
+- `音量`：音效规则里带的音量。
+- `光柱特效`：`PlayEffect` 的简写。
+- `小地图`：`MinimapIcon` 的简写。
+- `物品条件`：`Class`、`BaseType`、`ItemLevel`、`SetFontSize`、颜色、特效、
+  小地图等判定条件的汇总。
 
-## The Window At A Glance
+## 窗口结构
 
-Across the **top toolbar**, controls are grouped into labeled clusters separated
-by dividers, so they read left-to-right:
+顶部工具栏按功能分簇，从左到右是：
 
-- **File** — `📂 Load Filter`.
-- **Economy Tier** — a dropdown that restyles the filter by value tier (see
-  [Economy Tier Visual Preset](#economy-tier-visual-preset)). It acts as an
-  action trigger: pick a mode and the preview dialog opens, then it resets to
-  `Off`.
-- **Search** — the search box and the `Only with sound` toggle.
-- **Appearance** — the color **Theme** and **Light/Dark** mode pickers.
+- **文件** —— `📂 加载过滤器`。
+- **经济档次** —— 下拉框，选中后按价值档次重排视觉（见
+  [经济档次视觉](#经济档次视觉)）。它是动作触发器：选完就弹预览，随后自动复位到「关闭」。
+- **搜索** —— 搜索框 + 「仅有音效」开关。
+- **外观** —— 配色主题和深/浅色模式。
 
-Below that are three **action button bars** (sound actions, "On filtered set"
-bulk actions, and Color Tools). These **wrap onto more rows automatically** if
-the window is narrow, so no button is ever cut off. At the very bottom is the
-**status bar** with a clickable health pill.
+下面三条按钮栏分别是音效操作、「对可见行批量」操作和颜色工具，窗口变窄时会自动
+换行，不会把按钮切掉。最底部是状态栏，右侧是健康状态标签。
 
-## Menus: Where Everything Lives
+## 菜单都在哪
 
-Every feature is reachable from the menu bar, grouped by task:
+所有功能都能从菜单栏找到，按用途分组：
 
-### File
-- **Open Filter…** (`Ctrl+O`) — load a `.filter` file.
-- **Save** (`Ctrl+S`) — save the current filter (with a backup).
-- **Save As…** — save a copy under a new name.
-- **Reload from disk** (`F5`) — re-load the file, discarding unsaved changes.
-- **Recent Filters** — re-open a recently used filter.
-- **Open POE2 Filter Folder** — open the detected Path of Exile 2 filter folder.
-- **Open Current Filter Folder** — open the folder of the loaded filter.
-- **Quit** (`Ctrl+Q`).
+### 文件
 
-### View
-- **Appearance Mode** — System / Light / Dark.
-- **Color Theme** — pick a UI color palette.
-- **Toggle Show-only-with-sound** — hide rows that have no sound.
+- **打开过滤器…**（`Ctrl+O`）—— 加载 `.filter`。
+- **保存**（`Ctrl+S`）—— 保存当前过滤器（含备份）。
+- **另存为…** —— 以新名字保存副本。
+- **从磁盘重新加载**（`F5`）—— 丢弃未保存改动，重新读文件。
+- **最近打开** —— 快速回到最近用过的过滤器。
+- **打开流放2过滤器目录** —— 打开检测到的过滤器目录。
+- **打开当前过滤器目录** —— 打开当前文件所在目录。
+- **退出**（`Ctrl+Q`）。
 
-### Sounds
-- **Set Tier Sounds…** — set one sound for every item in a value tier at once
-  (see [Set Tier Sounds](#set-tier-sounds-by-economy-value)).
-- **Sound File Manager…** — see missing/orphan/used sound files; delete orphans.
-- **Verify & Fix Sounds…** (`Ctrl+H`) — find and repair missing sound references
-  and archive unused files.
-- **Make Sounds Unique…** (`Ctrl+U`) — spread different sounds across the visible
-  rows.
+### 视图
 
-### Visuals & Tiers
-- **Economy Tier Visuals…** — restyle the whole filter by value tier; includes
-  **🎨 Edit Tier Styles…** for editing per-tier colours/effects and saving presets.
-- **Emphasize by Tier…** — quick visual emphasis based on the filter's own grading.
-- **Randomize Visuals…** — assign curated random colour schemes per block.
+- **外观模式** —— 跟随系统 / 浅色 / 深色。
+- **配色主题** —— 切换整套配色。
+- **切换：仅显示有音效的行** —— 隐藏没有音效的行。
 
-### Filter Health
-- **Check Filter Compatibility…** — scan for unknown/deprecated directives and
-  offer migration fixes.
-- **Filter Statistics…** — a summary of blocks, sounds, sections, and more.
+### 音效
 
-### Settings
-- **Settings…** (`Ctrl+,`) — see [Settings](#settings).
+- **按档次设置音效…** —— 一次性给某个价值档次内的全部物品设置同一音效（见
+  [按经济价值档次设置音效](#按经济价值档次设置音效)）。
+- **音效文件管理…** —— 查看缺失 / 孤立 / 已引用的音效文件，可删除孤立文件。
+- **校验并修复音效…**（`Ctrl+H`）—— 找出并修复缺失的音效引用，归档未使用文件。
+- **音效去重…**（`Ctrl+U`）—— 把不同音效铺到当前可见的行上。
 
-### Help
-- **POE2 Filter Syntax (web)**, **FilterBlade Editor (web)**, and **About**.
+### 视觉与档次
 
-## Search And Categories
+- **经济档次视觉…** —— 按价值档次重排整表视觉；内含 `🎨 编辑档次样式…` 可编辑
+  各档次的颜色/特效并保存预设。
+- **按档次强化…** —— 依据过滤器自带的档次信息做快速视觉强化。
+- **随机视觉…** —— 给每个块分配一套精选配色，保持随机但可复现。
+- **添加/更新机会石物品…** —— 维护「机会石基底」清单。
 
-The search box filters across category, subsection, FilterBlade tags, rarity,
-sound, volume, effect, minimap, and context.
+### 过滤器健康
 
-The sidebar includes:
+- **检查过滤器兼容性…** —— 扫描未知/废弃指令，并提供迁移修复。
+- **过滤器统计…** —— 规则块、音效、章节等概要统计。
 
-- `All Categories`: Everything in the filter.
-- `Sound State`: Blocks with sounds, without sounds, and commented-out sound
-  rules.
-- `Smart Groups`: Curated groups such as currency, waystones/maps, uniques,
-  gems, leveling, hide rules, and gear.
-- `Sections`: Raw filter sections and subsections found in comments like
-  `# [[1234]] Section Name` and `#   [1234] Subsection Name`.
-- `$type->` breakdowns: When a section contains multiple FilterBlade type tags,
-  the sidebar exposes those subgroups too.
+### 设置
 
-## Sound Editing
+- **设置…**（`Ctrl+,`）—— 见[设置](#设置)。
 
-### Set Tier Sounds (by economy value)
+### 帮助
 
-**Sounds → Set Tier Sounds…** lets you give every item in a value tier the same
-drop sound in one step. The dialog lists each tier (SS_CHANCE_BASE … F) with the
-number of blocks in it; click **🔊 Set Sound…** on a tier, pick an audio file, and
-that `CustomAlertSound` is applied to every block in that tier (or **Remove** to
-clear it). A backup is always made first, and only the sound line changes —
-colours and conditions are left alone. The Mode/Min-confidence selectors control
-which blocks count as each tier (same logic as the Economy Tier visuals).
+- **使用说明…** —— 应用内的中文快速指引。
+- **流放2过滤器语法（网页）**、**FilterBlade 编辑器（网页）**、**打开调试日志**、
+  **打开日志目录**、**关于**。
 
-### Replace Or Add Sound
+## 搜索与分类
 
-Select a row, click `Replace / Add Sound`, and choose an audio file.
+搜索框会同时匹配分类、子章节、FilterBlade 标签、稀有度、音效、音量、特效、
+小地图和物品条件。
 
-The app copies that file into the loaded filter's folder, then edits the filter:
+左侧分类栏包含：
 
-- If the selected block has no sound, it inserts:
+- `全部分类`：过滤器里的全部规则块。
+- `音效状态`：有音效、无音效、以及被注释掉的音效规则。
+- `智能分组`：按逻辑归并的分组，如通货、引路石/地图、传奇、开荒、隐藏规则、装备。
+- `章节`：注释里的原始章节与子章节，形如 `# [[1234]] 章节名` 与
+  `#   [1234] 子章节名`。
+- `$type->` 细分：当某章节里有多种 FilterBlade 类型标签时，这里会列出子分组。
+
+## 音效编辑
+
+### 按经济价值档次设置音效
+
+**音效 → 按档次设置音效…** 可以一次性给某个档次内的所有物品设置同一个掉落音效。
+对话框会列出每个档次（`SS_CHANCE_BASE` … `F`）以及其中有多少个规则块；点某个档次的
+`🔊 设置音效…`，选一个音频文件，该 `CustomAlertSound` 就会应用到该档次内所有块
+（点「移除」则清空）。应用前一定先建备份，且**只改音效那一行**，颜色和条件不动。
+「模式」和「最低置信度」决定哪些块算进某个档次（与经济档次视觉用的是同一套判定）。
+
+### 替换或添加音效
+
+选中一行，点 `替换/添加音效…`，选一个音频文件。
+
+程序会把文件复制到当前过滤器目录，然后按情况修改：
+
+- 该块原本没有音效，插入：
 
 ```text
 CustomAlertSound "filename.ext" 300
 ```
 
-- If the selected block has `CustomAlertSound`, it replaces the filename and
-  keeps the existing volume when one exists.
-- If the selected block has `PlayAlertSound` or `PlayAlertSoundPositional`, it
-  converts that line to `CustomAlertSound`.
+- 该块已有 `CustomAlertSound`，则替换文件名，并保留原有音量。
+- 该块是 `PlayAlertSound` / `PlayAlertSoundPositional`，则把该行转成 `CustomAlertSound`。
 
-### Bulk Replace Checkbox
+### 批量替换勾选
 
-The checkbox labeled `Bulk replace/add for all matching rows` changes how the
-main replace and volume buttons behave:
+`对全部匹配行批量替换/添加` 这个勾选项会改变主界面替换和音量按钮的行为：
 
-- If the selected row has no sound, replace/add applies to all no-sound rows.
-- If the selected row has a sound, replace/volume applies to all rows with the
-  same sound value and same sound type.
+- 选中的行没有音效时，替换/添加会应用到所有「无音效」的行。
+- 选中的行有音效时，替换/音量会应用到音效值相同、类型相同的所有行。
 
-### Filtered-Set Bulk Operations
+### 对可见集批量操作
 
-The `On filtered set` controls operate only on what is currently visible after
-sidebar and search filtering:
+`对可见行批量` 里的按钮只作用于当前筛选后可见的行：
 
-- `Replace Sound in Visible`: Replaces sounds in visible blocks and adds sounds
-  to visible blocks that do not have one.
-- `Set Volume on Visible`: Sets volume on all visible sound rows.
-- `Mute Visible`: Comments out visible active sound rules.
-- `Un-mute Visible`: Removes the comment marker from visible commented sound
-  rules.
+- `替换音效`：替换可见块的音效，并给没有音效的可见块添加音效。
+- `设置音量`：给所有可见的有音效行设置音量。
+- `静音`：注释掉可见行里生效的音效规则。
+- `取消静音`：去掉可见行里已注释音效规则的注释标记。
 
-This is the safest way to target a specific category such as uniques, maps, or
-currency.
+这是最安全的定向方式，适合只针对「传奇」「地图」「通货」这类特定分类下手。
 
-## Sound Preview
+## 音效试听
 
-Preview buttons:
+试听按钮：
 
-- `Play Last Change`: Plays the most recently selected replacement file.
-- `Play Selected`: Plays the selected `CustomAlertSound` file from the filter
-  folder.
-- `Stop`: Stops playback where the active backend supports it.
+- `试听上次修改`：播放最近一次选中的替换文件。
+- `试听选中`：播放选中行在过滤器目录里的 `CustomAlertSound` 文件。
+- `停止`：在支持的后端上停止播放。
 
-The app tries these backends in order:
+程序按以下顺序尝试后端：
 
-1. VLC through `python-vlc`
+1. `python-vlc`（VLC）
 2. `pygame`
-3. `pydub` plus `simpleaudio`
+3. `pydub` + `simpleaudio`
 4. `playsound`
 5. `ffplay`
-6. The system default player
-7. Windows `winsound` for `.wav` files
+6. 系统默认播放器
+7. Windows `winsound`（仅 `.wav`）
 
-FFmpeg is auto-detected from:
+FFmpeg 的自动检测顺序：
 
-1. The path saved in settings
-2. System `PATH`
-3. A local `ffmpeg` or `ffmpeg/bin` folder beside `main.py`
+1. 设置里保存的路径
+2. 系统 `PATH`
+3. `main.py` 旁边的 `ffmpeg` 或 `ffmpeg/bin` 目录
 
-Audio preview is optional. Filter editing still works without preview support.
+试听是可选能力，没有也能正常改过滤器。
 
-## Color Editing
+## 颜色编辑
 
-The color tools work on the selected filter block:
+颜色工具作用于选中的规则块：
 
-- `Edit Colors`: Choose text, border, or background color.
-- `Copy Colors`: Copies all colors from the selected block into the app's
-  internal color clipboard.
-- `Paste Colors`: Applies copied colors to another selected block.
-- `Preview Item`: Shows a simulated POE2 item preview using the block colors.
-- `Remove Colors`: Removes text, border, and background color rules from the
-  block.
+- `编辑颜色`：选择文字、边框或背景色。
+- `复制颜色`：把选中块的全部颜色复制到程序内部剪贴板。
+- `粘贴颜色`：把复制过的颜色应用到另一个块。
+- `预览物品`：用该块的颜色模拟显示一件 POE2 物品。
+- `移除颜色`：删掉该块的文字、边框和背景色规则。
 
-Supported color rules:
+支持的规则：
 
 ```text
 SetTextColor R G B A
@@ -309,489 +289,413 @@ SetBorderColor R G B A
 SetBackgroundColor R G B A
 ```
 
-The alpha value is optional in filter syntax. When absent, the parser treats it
-as `255`.
+alpha 值在语法里可省略，省略时解析为 `255`（完全不透明）。颜色太淡看不清就调高
+alpha，`255` 最实。
 
-## Economy Tier Visual Preset
+## 经济档次视觉
 
-Restyle your whole filter by **economy value tier** in one step. It scans every
-block, classifies the items it matches into a value tier (SS → F, plus the
-special `SS_CHANCE_BASE` for high-value chancing bases), and applies one
-consistent look per tier across every item category.
+一步把整张过滤器按**经济价值档次**重排视觉。它会扫描所有规则块，把物品归到某个
+价值档次（SS → F，另有专供高价值机会石基底的 `SS_CHANCE_BASE`），然后对每个档次
+统一套一套观感。
 
-Use the **Economy Tier** dropdown in the top toolbar, or **Visuals & Tiers →
-Economy Tier Visuals…**. Modes: `Off` (default), `Preview Only`, `Apply Economy Tier Visuals`,
-`Apply Economy Tier Visuals Plus Chance Base Boost`, and `Restore Previous
-Visuals`. Every apply shows a preview diff first and writes a verified backup to
-`backups/` before saving.
+入口：顶部工具栏的**经济档次**下拉，或 `视觉与档次 → 经济档次视觉…`。模式有：
+`关闭`（默认）、`仅预览`、`应用经济档次视觉`、
+`应用经济档次视觉＋机会石基底提升`、`恢复上一次视觉`。每次应用前都会先显示改动
+预览，并在写入前于 `backups/` 生成一份已校验的备份。
 
-Key guarantees:
+几条硬保证：
 
-- **Sounds are never touched.** `PlayAlertSound*`, `CustomAlertSound*`, and
-  `DisableDropSound` stay byte-for-byte identical; a structural-diff guard aborts
-  the save if anything other than the targeted visual directives would change.
-- **Conservative by default.** `Hide` blocks, sound-only rules, and
-  low-confidence guesses are left alone unless you opt in (Minimum confidence /
-  "alter hidden" controls). Re-applying is idempotent.
-- **Chance Base Boost** promotes only `Rarity Normal` blocks whose `BaseType`
-  exactly matches a known chancing base — never Magic/Rare, never a substring.
-- **Restore** reverts the last economy-tier operation (and is itself undoable).
-- **Customizable looks.** Click **🎨 Edit Tier Styles…** to set each tier's
-  colours, font, beam (`PlayEffect`), and minimap marker, and save it as a named
-  preset you can switch between in the Template dropdown.
+- **绝不碰音效。** `PlayAlertSound*`、`CustomAlertSound*`、`DisableDropSound`
+  逐字节保持不变；如果保存前发现除目标视觉指令以外还有任何变化，结构差异守卫会
+  直接中止保存。
+- **默认保守。** `Hide` 块、纯音效规则、低置信度判定都会跳过，除非你显式放开
+  （调整「最低置信度」或「是否处理隐藏块」）。重复应用是幂等的。
+- **机会石基底提升**只提升 `Rarity Normal` 且 `BaseType` **精确**命中已知机会石
+  基底的块，不会误伤魔法/稀有，也不做子串匹配。
+- **恢复**能回退上一次经济档次操作（该回退本身也可撤销）。
+- **观感可定制。** 点 `🎨 编辑档次样式…` 可设置每个档次的颜色、字体、掉落光柱
+  （`PlayEffect`）和小地图标记，并存成命名预设，用「模板」下拉切换。
 
-Economy values drift — the shipped tier data is a relative-value snapshot, not
-prices. See **[docs/economy_tier_visuals.md](docs/economy_tier_visuals.md)** for
-how it classifies, how to update `data/economy_tiers/poe2_0_5_tiers.json` via
-`tools/update_economy_tiers.py`, and how to add visual templates.
+经济价值会漂移，内置档次数据是相对价值快照而非实时价格。判定逻辑、如何用
+`tools/update_economy_tiers.py` 更新 `data/economy_tiers/poe2_0_5_tiers.json`、
+以及如何新增视觉模板，见 **[docs/economy_tier_visuals.md](docs/economy_tier_visuals.md)**。
 
-## Sound Health Tools
+## 音效健康检查工具
 
-The status bar has a clickable health indicator. When `verify_on_save` is
-enabled, the app scans the loaded filter on load and after saves.
+状态栏有一个可点击的健康标签。开启 `保存时校验` 后，程序会在加载时和每次保存后
+扫描当前过滤器。
 
-The health scan checks only top-level audio files in the filter folder. It
-recognizes these extensions:
+健康扫描只检查过滤器目录下的顶层音频文件，识别的扩展名：
 
 ```text
 .mp3 .wav .ogg .aac .flac .m4a .opus
 ```
 
-### Verify And Fix Sounds
+### 校验并修复音效
 
-Use `Sounds > Verify & Fix Sounds` or press `Ctrl+H`.
+`音效 > 校验并修复音效…` 或 `Ctrl+H`。
 
-The tool finds:
+能找出：
 
-- Missing custom sound references: filenames used by `CustomAlertSound` but not
-  found in the filter folder.
-- Orphan files: audio files in the filter folder that are not referenced by the
-  filter.
+- **缺失引用**：`CustomAlertSound` 引用了、但目录里不存在的文件。
+- **孤立文件**：目录里存在、但过滤器没有引用的音频文件。
 
-When fixing missing references, the app builds a substitute plan from sounds
-that exist in the folder. You can randomize the plan or double-click a row to
-choose a specific substitute.
-
-When archiving orphan files, the app moves them to:
+修复缺失引用时，程序会用目录里已有的音效生成替代方案，可整体随机化，也可双击某行
+指定具体替代文件。归档孤立文件时会移动到：
 
 ```text
 old sound files/
 ```
 
-### Sound File Manager
+### 音效文件管理
 
-Use `Sounds > Sound File Manager` to view:
+`音效 > 音效文件管理…` 分三页展示：缺失的引用、孤立文件、已引用文件及引用次数。
 
-- Missing referenced files
-- Orphan files
-- Referenced files and usage counts
+管理器可以删除选中的孤立文件。**删除是永久的**，慎用。
 
-The manager can delete selected orphan files. Use that carefully; deleting is
-permanent.
+### 音效去重
 
-### Make Sounds Unique
+`音效 > 音效去重…` 或 `Ctrl+U`。
 
-Use `Sounds > Make Sounds Unique` or press `Ctrl+U`.
+只作用于当前可见的、生效中的 `CustomAlertSound` 行，也就是左侧分类和搜索框决定
+的工作集；被注释掉的规则不参与。
 
-This operates on visible active `CustomAlertSound` rows only, so the sidebar and
-search box define the working set. Commented-out rules are ignored.
+策略：
 
-Strategies:
+- `每个块都不同`：每个可见块用一个不同音效。音效文件数量足够时才可用。
+- `尽量减少重复`：把可用音效尽量均匀地铺开。
+- `纯随机`：每个可见块独立随机抽取。
 
-- `Every block unique`: Uses one different sound per visible block. This is only
-  available when the folder has enough audio files.
-- `Minimize duplication`: Distributes available sounds as evenly as possible.
-- `Pure random`: Picks a random sound independently for each visible block.
+## 智能赛季迁移
 
-## Smart Season Migration
+`赛季迁移` 页签用来把旧赛季过滤器里的自定义音效搬到新赛季过滤器。
 
-The `Merge` tab is for moving custom sounds from an old season filter into a new
-season filter.
+基本流程：
 
-Basic workflow:
+1. 打开 `赛季迁移` 页签。
+2. 加载**旧赛季**过滤器（已经带着你自定义音效的那个）。
+3. 加载**新赛季**过滤器（你打算继续用的新底版）。
+4. 需要的话调整最低置信度。
+5. 点 `🔍 查找匹配`。
+6. 在表格里审阅匹配结果。
+7. 逐条通过，或用 `✓ 自动通过 90% 以上`。
+8. 点 `🚀 执行迁移`。
+9. 把结果另存为新的 `.filter` 文件。
 
-1. Open the `Merge` tab.
-2. Load the old season filter. This should be the filter that already has your
-   custom sounds.
-3. Load the new season filter. This should be the new base filter you want to
-   use going forward.
-4. Set the minimum confidence threshold if needed.
-5. Click `Find Matches`.
-6. Review matches in the table.
-7. Approve matches manually or use the 90 percent auto-approve button.
-8. Click `Execute Migration`.
-9. Save the migrated result as a new `.filter` file.
+匹配逻辑在 `features/smart_merge.py`：两侧都解析成 `FilterBlock`，再把「旧的有音效
+的块」和「新块」逐一比较，加权计分：
 
-How matching works:
+- 稀有度 35%
+- 类别 25%
+- 基底 20%
+- 其他条件行 15%
+- Show/Hide 首行 5%
 
-`features/smart_merge.py` parses both filters into `FilterBlock` objects, then
-compares old blocks with sounds against new blocks. The score is weighted:
+匹配等级：`exact` ≥90%、`high` 70–89%、`medium` 50–69%、`low` <50%。
 
-- Rarity: 35 percent
-- Class: 25 percent
-- BaseType: 20 percent
-- Other context lines: 15 percent
-- Show/Hide header: 5 percent
+当前行为：
 
-Match classes:
+- 只迁移音效行。
+- 不迁移颜色、特效、小地图图标。
+- 把通过审核的旧音效行插入到匹配到的新块里。
+- 保存到你指定的输出文件。
 
-- `exact`: 90 percent and up
-- `high`: 70 to 89 percent
-- `medium`: 50 to 69 percent
-- `low`: below 50 percent
+如果智能迁移界面加载失败，`main.py` 会退回旧的精确匹配合并模式：比较块的精确签名，
+把左侧过滤器的音效替换成中间过滤器的音效。
 
-Current smart merge behavior:
+## 物品显隐页签
 
-- Transfers sound lines only.
-- Does not transfer colors, effects, or minimap icons.
-- Inserts approved old sound lines into the matched new filter blocks.
-- Saves to a user-selected output file.
+`物品显隐` 页签是给新手用的：决定某条物品规则在游戏里**显示**（可以掉在地上）还是
+**隐藏**。它只改规则块第一行的 `Show`/`Hide` 这个词，绝不动规则内容、条件、音效、
+颜色、`PlayEffect`、`MinimapIcon`。
 
-If the smart merge UI cannot load, `main.py` falls back to a legacy exact-match
-merge. Legacy mode compares exact block signatures and replaces sounds in the
-left filter with sounds from the middle filter.
+界面元素：
 
-## Item Visibility Tab
+- 顶部一行说明，写清这个页签会做什么、不会做什么。
+- 控制栏：搜索框 + 三个下拉框 —— **显隐**（全部 / 当前显示 / 当前隐藏）、
+  **章节**、**分组**（通货、引路石/地图、传奇、技能宝石、装备、药剂/咒符、
+  符文/灵魂核心/神像、其他）。
+- 表格一行一个规则块：待应用标记、当前显隐、目标显隐、**风险**等级、所属章节/子章节，
+  以及该块的稀有度、类别、基底、等级条件、堆叠数量、音效、光柱/小地图摘要和物品条件。
 
-The `Item Visibility` tab is a beginner-friendly way to choose whether each item
-rule is **Shown in game** (the item can appear on the ground) or **Hidden in
-game** (the filter hides it). It only ever changes the `Show`/`Hide` word at the
-top of a block — it never deletes rules, conditions, sounds, colors,
-`PlayEffect`, or `MinimapIcon` lines.
+使用步骤：
 
-What you see:
+1. 加载过滤器（页签会自动填充，并在每次加载/保存后刷新）。
+2. 选中一行或多行（Ctrl 点选 / Shift 连选），或用 `选中可见行`。
+3. 点 `👁 设为显示` / `🚫 设为隐藏`，或右键该行做同样操作，另有「恢复为当前状态」
+   和「查看原始规则块…」。双击一行也能打开原始块预览，并高亮将要改动的那一行。
+   批量操作作用于选中的行；没有选中任何行时，作用于当前全部可见行。
+4. 改动只暂存在内存里，尚未写入。状态行会显示待应用数量。`撤销未保存的改动` 会清空
+   全部暂存。
+5. 点 `✔ 应用改动…` 打开确认对话框：逐条列出计划改动（行号、章节、物品、
+   从 → 到、风险），并汇总多少块由显示变隐藏、多少块反向变化、多少块属于高风险，
+   以及过滤器路径和备份写入位置。隐藏高价值分类（通货、引路石/地图、传奇、技能宝石、
+   带光柱或小地图图标的块、过宽泛的捕获块）或一次隐藏大量规则块时会有警告。
+6. 确认后执行：先建备份，只重写首行的 Show/Hide 词，原子写入，随后所有页签刷新。
 
-- A note at the top stating exactly what the tab does (and does not) change.
-- A control bar with a search box and three dropdowns — **Visibility** (All /
-  Currently Shown / Currently Hidden), **Section**, and **Group** (Currency,
-  Waystones/Maps, Uniques, Gems, Gear, Flasks/Charms, Runes/Soul Cores/Idols,
-  Other).
-- A table with one row per block: a pending-change marker, the current and
-  desired visibility, a **Risk** label, the section/subsection, and the block's
-  rarity, class, base types, level conditions, stack size, sound, effect/minimap
-  summary, and item context.
+风险等级是启发式判断。**高**：高价值章节、高价值档次、带 `PlayEffect` /
+`MinimapIcon` / 大字号、以及非常宽泛的块（既无 `Class` 也无 `BaseType`）。
+**中**：有类别但范围偏宽的块、稀有装备、带生效音效的块。**低**：其余。
 
-How to use it:
+逻辑在 `features/visibility_manager.py`（块遍历、元数据、风险判定、原子应用），
+界面在 `ui/visibility_manager_tab.py`。块边界遍历函数 `iter_filter_blocks()` 是共享的，
+以后做类似工具可以直接复用。
 
-1. Load a filter (the tab fills in automatically and refreshes after every
-   load/save).
-2. Select one or more rows (Ctrl-click / Shift-click), or use **Select visible**.
-3. Click **Set to Shown** / **Set to Hidden**, or right-click a row for the same
-   actions plus **Reset to current** and **Preview raw block…**. Double-clicking
-   a row also opens the raw-block preview, which highlights the exact line that
-   will change. Bulk actions apply to the selected rows, or to all currently
-   visible rows when nothing is selected.
-4. Toggles are staged in memory only — nothing is written yet. The pending count
-   shows in the status line. **Revert Unsaved** clears every pending toggle.
-5. Click **Apply Changes…** to open a review dialog. It lists every planned
-   change (line, section, item, From → To, risk), summarizes how many blocks go
-   Show→Hide and Hide→Show, how many are high-risk, the filter path, and where
-   the backup will be written. It warns before hiding valuable categories
-   (currency, waystones/maps, uniques, gems, blocks with drop beams/minimap
-   icons, broad catch-all blocks) or hiding many blocks at once.
-6. Confirm to apply. A backup is created first, only the header words are
-   rewritten, the file is saved atomically, and every tab refreshes.
+## 保存与备份
 
-Risk levels are heuristics. **High** flags valuable sections, high value tiers,
-blocks with `PlayEffect`/`MinimapIcon`/large fonts, and very broad blocks (no
-`Class` and no `BaseType`). **Medium** flags broad-but-classed blocks, rare gear,
-and blocks with active sounds. **Low** is everything else.
+绝大多数写操作都会走 `core.file_operations.save_filter_file()`，它：
 
-The logic lives in `features/visibility_manager.py` (block walking, metadata,
-risk, and the atomic apply) and the UI in `ui/visibility_manager_tab.py`. The
-block-boundary walker `iter_filter_blocks()` is shared so future tools can reuse
-the same parsing.
+1. 按需先建一份带时间戳的备份。
+2. 写入临时文件。
+3. 原子替换原文件。
 
-## Saving And Backups
-
-Most write operations call `core.file_operations.save_filter_file()`.
-
-That function:
-
-1. Optionally creates a timestamped backup first.
-2. Writes to a temporary file.
-3. Replaces the original file atomically.
-
-Backups are stored beside the filter in a folder named:
+备份放在过滤器旁边的目录：
 
 ```text
-<filter-name>_backups/
+<过滤器名>_backups/
 ```
 
-Example backup file:
+示例：
 
 ```text
 my_filter_backups/my_filter_backup_20260531-164233.filter
 ```
 
-Default backup behavior:
+默认行为：开启备份，每个过滤器最多保留 20 份。这些都可在设置里改。
 
-- Backups are enabled.
-- The app keeps up to 20 backups per filter.
-- These settings are configurable in the Settings dialog.
+程序没有撤销栈，需要回滚就用备份（经济档次视觉另有自己的「恢复上一次视觉」）。
 
-There is no undo stack. Use backups if you need to roll back.
+## 设置
 
-## Settings
-
-Settings are saved as JSON in an OS-specific user config directory.
-
-On Windows:
+设置以 JSON 保存在系统用户配置目录。Windows 上是：
 
 ```text
 %APPDATA%\POE2FilterSoundEditor\settings.json
 ```
 
-Stored settings include:
+保存的项包括：
 
-- Theme palette and appearance mode
-- FFmpeg path override
-- Default volume for new sounds
-- Audio backend order
-- Recent files
-- Last loaded filter and autoload preference
-- Backup preference and backup retention count
-- Verify-on-save preference
-- Window geometry and sidebar preferences
+- 配色主题与深浅模式
+- FFmpeg 路径覆盖
+- 新音效的默认音量
+- 试听后端顺序
+- 最近打开的文件
+- 上次加载的过滤器与是否自动加载
+- 备份开关与保留数量
+- 保存时校验开关
+- 窗口位置与侧栏偏好
 
-Open settings with:
+打开方式：`设置 > 设置…` 或 `Ctrl+,`。
 
-- `Settings > Settings…`
-- `Ctrl+,`
+## 快捷键
 
-## Keyboard Shortcuts
+- `Ctrl+O`：打开过滤器
+- `Ctrl+S`：保存
+- `Ctrl+F`：聚焦搜索框
+- `F5`：从磁盘重新加载
+- `Ctrl+H`：校验并修复音效
+- `Ctrl+U`：音效去重
+- `Ctrl+,`：设置
+- `Ctrl+Q`：退出
+- `F1`：关于
 
-- `Ctrl+O`: Open filter
-- `Ctrl+S`: Save
-- `Ctrl+F`: Focus search
-- `F5`: Reload current filter from disk
-- `Ctrl+H`: Verify and fix sounds
-- `Ctrl+U`: Make sounds unique
-- `Ctrl+,`: Settings
-- `Ctrl+Q`: Quit
-- `F1`: About dialog
-
-## Project Layout
+## 项目结构
 
 ```text
-POE2 Item Filter Sound Replacer/
-  main.py                         Main app, menus, editor UI, bulk tools
-  run.bat                         Simple source launcher
-  build_exe.bat                   PyInstaller build helper
-  version.txt                     Auto-incremented build counter
-  nvo7elUI_400x400 (1).ico        App/build icon
+POE2 Filter Sound Studio/
+  main.py                         主程序：菜单、编辑器界面、批量工具
+  run.bat                         源码启动脚本
+  build_exe.bat                   PyInstaller 打包脚本
+  version.txt                     自增的构建号
+  nvo7elUI_400x400 (1).ico        应用/打包图标
 
   core/
-    data_models.py                FilterBlock, ColorData, SimilarityMatch,
-                                   ColorTemplate
-    parser.py                     Filter parsing, regexes, color helpers
-    sound_ops.py                  Pure block-level sound directive editing
-    file_operations.py            Load, save, backup, sound copy helpers
-    settings.py                   Persistent user settings
-    compatibility.py              Migration rule loader
+    data_models.py                FilterBlock、ColorData、SimilarityMatch、ColorTemplate
+    parser.py                     过滤器解析、正则、颜色辅助
+    sound_ops.py                  纯函数级的音效指令编辑
+    file_operations.py            加载、保存、备份、音效复制
+    settings.py                   用户设置持久化
+    compatibility.py              迁移规则加载
+    zh.py                         中文显示名 ⇄ 内部英文值 的映射
+    fonts.py                      中文字体安装（tkinter 命名字体）
 
   features/
-    color_editor.py               Color line editing helpers
-    smart_merge.py                Similarity scoring and migration executor
-    smart_merge_ui.py             Merge tab controller and UI
-    visibility_manager.py         Item Visibility block walking, risk, apply
-    themes.py                     Live palette system
-    batch_operations.py           Programmatic template and batch helpers
+    color_editor.py               颜色行编辑辅助
+    smart_merge.py                相似度评分与迁移执行
+    smart_merge_ui.py             迁移页签控制器与界面
+    visibility_manager.py         物品显隐：块遍历、风险、应用
+    themes.py                     实时配色系统
+    batch_operations.py           模板与批量辅助
 
   ui/
-    dialogs.py                    Color picker, item preview, confirmation UI
-    visibility_manager_tab.py     Item Visibility tab (Show/Hide management)
-    compatibility_dialog.py       Migration-rule UI
-    visual_tools_dialog.py        Emphasize-by-tier / randomizer UI
-    economy_tier_ui.py            Economy Tier Visual Preset dialog
-    economy_tier_editor.py        Per-tier style editor (named presets)
-    tier_sound_dialog.py          Per-tier sound assigner
+    dialogs.py                    取色器、物品预览、确认框
+    visibility_manager_tab.py     物品显隐页签
+    compatibility_dialog.py       迁移规则界面
+    visual_tools_dialog.py        按档次强化 / 随机视觉
+    economy_tier_ui.py            经济档次视觉对话框
+    economy_tier_editor.py        档次样式编辑器（命名预设）
+    tier_sound_dialog.py          按档次设置音效
+    tier_detail_dialog.py         单档次详情与逐块调整
 
-  economy_tier/                   Economy Tier Visual Preset (pure core + I/O)
-    filter_parser.py              Round-trip-fidelity parser (operator-aware)
-    economy_tier_data.py          Tier data loader (schema-validated, versioned)
-    economy_tier_classifier.py    Pure tier classification + run fingerprint
-    visual_template_loader.py     Templates + game-valid token validation
-    directive_value_validator.py  PlayEffect/MinimapIcon/RGBA enum checks
-    filter_visual_patcher.py      Line-surgical patch + idempotency sentinel
-    filter_validator.py           Post-edit checks + structural diff guard
-    backup_manager.py             Verified backup, atomic write, external-edit
-    op_history.py                 Disk-persisted history for Restore
-    controller.py                 Orchestration the UI calls
-    schemas/*.schema.json         JSON Schemas for the data/template/history files
+  economy_tier/                   经济档次视觉（纯核心 + IO）
+    filter_parser.py              字节级往返保真的解析器
+    economy_tier_data.py          档次数据加载（schema 校验、带版本）
+    economy_tier_classifier.py    纯档次判定 + 运行指纹
+    visual_template_loader.py     模板与游戏内合法 token 校验
+    directive_value_validator.py  PlayEffect / MinimapIcon / RGBA 枚举校验
+    filter_visual_patcher.py      行级外科手术式打补丁 + 幂等标记
+    filter_validator.py           改后校验 + 结构差异守卫
+    backup_manager.py             校验备份、原子写入、外部改动检测
+    op_history.py                 落盘的操作历史，供「恢复」使用
+    controller.py                 界面调用的编排层
+    schemas/*.schema.json         数据/模板/历史文件的 JSON Schema
 
   data/
     color_templates/templates.json
-    color_templates/economy_tier_templates.json   Economy tier visual templates
-    economy_tiers/poe2_0_5_tiers.json             Economy tier seed data
+    color_templates/economy_tier_templates.json   经济档次视觉模板
+    economy_tiers/poe2_0_5_tiers.json             档次种子数据
     migration_rules.json
+    visual_presets.json
 
   tools/
-    update_economy_tiers.py       Maintainer-only offline data updater
+    update_economy_tiers.py       仅维护者使用的离线数据更新脚本
 
-  tests/                          pytest suite (parser/classifier/.../golden)
-  requirements.txt                Runtime deps (generated from imports)
-  requirements-dev.txt            Test/lint/type/packaging deps
-  pyproject.toml                  ruff / black / mypy / pytest config (new code)
+  tests/                          pytest 测试（解析器/判定器/…/黄金样本）
+  requirements.txt                运行依赖（按实际 import 生成）
+  requirements-dev.txt            测试/lint/类型/打包依赖
+  pyproject.toml                  ruff / black / mypy / pytest 配置
 
-  ffmpeg/bin/ffmpeg.exe           Optional, auto-bundled into the EXE if present
-  dist/builds/App_v<N>.exe        Build output
+  ffmpeg/bin/ffmpeg.exe           可选，存在时会被打进 exe
+  dist/builds/App_v<N>.exe        打包产物
 ```
 
-The current UI uses the built-in palette list in `features/themes.py`.
+界面配色来自 `features/themes.py` 里的内置调色板列表。
 
-`features/batch_operations.py` and `data/color_templates/templates.json` provide
-helper classes for template and batch color workflows, but the main user-facing
-bulk sound controls currently live in `main.py`.
+`features/batch_operations.py` 和 `data/color_templates/templates.json` 提供了模板化
+和批量配色的辅助类，但面向用户的批量音效控件目前仍在 `main.py` 里。
 
-## How The Code Works
+## 代码是怎么跑的
 
-At startup, `main.py` creates a `FilterSoundEditor`.
+启动时 `main.py` 创建 `FilterSoundEditor`。
 
-Startup flow:
+启动流程：
 
-1. Load settings from `core/settings.py`.
-2. Set CustomTkinter appearance mode.
-3. Detect FFmpeg and optional audio backends.
-4. Build the menu bar, editor tab, merge tab, sidebar, table, status bar, and
-   dialogs.
-5. Apply the selected live palette.
-6. Autoload the last filter if enabled, or offer to open a filter from the POE2
-   folder.
+1. 读取设置（`core/settings.py`）。
+2. 设置 CustomTkinter 外观模式。
+3. 检测 FFmpeg 和可用的试听后端。
+4. 安装中文字体（`core/fonts.py` 统一 tkinter 命名字体）。
+5. 构建菜单栏、编辑器页签、显隐页签、迁移页签、侧栏、表格、状态栏和对话框。
+6. 应用选定的配色。
+7. 按设置自动加载上次的过滤器，或提示从 POE2 目录打开。
 
-Filter loading flow:
+加载流程：
 
-1. `load_filter_file()` reads the `.filter` file into `self.lines`.
-2. `refresh_filter_data()` walks the file line by line.
-3. Section comments, subsection comments, and `Show`/`Hide` blocks are detected.
-4. Each block becomes one or more table entries depending on whether it has
-   sound rules.
-5. The category sidebar and main table are rebuilt.
-6. The health indicator scans custom sound references.
+1. `load_filter_file()` 把 `.filter` 读进 `self.lines`。
+2. `refresh_filter_data()` 逐行扫描。
+3. 识别章节注释、子章节注释和 `Show`/`Hide` 块。
+4. 每个块按是否有音效规则生成一行或多行表格条目。
+5. 重建分类侧栏和主表格。
+6. 健康指示器扫描自定义音效引用。
 
-Editing flow:
+编辑流程：
 
-1. The selected table row maps back to its block start line.
-2. The app scans until the next `Show` or `Hide` line to find the block bounds.
-3. The relevant sound or color line is replaced, inserted, commented, or
-   removed in `self.lines`.
-4. The filter is saved with backups if enabled.
-5. The filter is reloaded so the table and sidebar reflect the file on disk.
+1. 选中的表格行映射回它的块起始行号。
+2. 往下扫到下一个 `Show`/`Hide` 行，确定块范围。
+3. 在 `self.lines` 里替换、插入、注释或删除对应的音效/颜色行。
+4. 按备份设置保存。
+5. 重新加载，让表格和侧栏反映磁盘上的真实内容。
 
-The app tries to preserve the original filter structure. It edits the smallest
-needed lines instead of regenerating the whole file.
+程序尽量保留原始结构：只改最少的那几行，而不是整份重新生成。
 
-## Building An EXE
+## 打包 exe
 
-Install PyInstaller:
+安装 PyInstaller：
 
 ```powershell
 py -m pip install pyinstaller
 ```
 
-`build_exe.bat` expects a `version.txt` file in the project root. If it does not
-exist, create one containing a starting number:
+`build_exe.bat` 依赖项目根目录的 `version.txt`，没有就新建一个，写入起始数字：
 
 ```text
 1
 ```
 
-Then run:
+然后运行：
 
 ```powershell
 .\build_exe.bat
 ```
 
-The script:
+脚本会：递增 `version.txt`、取根目录第一个 `.ico`、按需创建 `dist\builds`、
+在存在时打包 `ffmpeg\bin\ffmpeg.exe`，最终用 `main.py` 打成单文件窗口程序。
 
-- Increments `version.txt`.
-- Uses the first `.ico` file in the project root.
-- Creates `dist\builds` if needed.
-- Includes `ffmpeg\bin\ffmpeg.exe` when that file exists.
-- Builds a one-file, windowed executable from `main.py`.
-
-Output goes to:
+产物在：
 
 ```text
 dist\builds\
 ```
 
-## Troubleshooting
+## 常见问题
 
-### The app will not start
+### 程序起不来
 
-Install `customtkinter`:
+装 `customtkinter`：
 
 ```powershell
 py -m pip install customtkinter
 ```
 
-If `py` is not available, try:
+没有 `py` 就换：
 
 ```powershell
 python -m pip install customtkinter
 python main.py
 ```
 
-### Sound preview does not work
+### 试听没声音
 
-Editing still works without preview. For preview support, install one or more
-optional backends:
+改过滤器不受影响。要试听就装至少一个后端：
 
 ```powershell
 py -m pip install python-vlc pygame pydub simpleaudio playsound
 ```
 
-For `python-vlc`, VLC itself must also be installed. For `pydub`, FFmpeg should
-be installed or configured in settings.
+`python-vlc` 还需要额外安装 VLC 本体；`pydub` 需要 FFmpeg（装了或在设置里指定）。
 
-### Sounds do not play in-game
+### 游戏里听不到自定义音效
 
-Check that:
+逐项确认：
 
-- The sound file exists beside the `.filter` file.
-- The filename in `CustomAlertSound "filename.ext"` exactly matches the file.
-- The game supports the chosen file type.
-- The volume is not `0`.
-- The rule is not commented out with `#`.
+- 音效文件在 `.filter` 同目录。
+- `CustomAlertSound "文件名.ext"` 里的文件名与磁盘上完全一致（含大小写）。
+- 游戏支持该文件格式。
+- 音量不为 `0`。
+- 规则没有被 `#` 注释掉。
 
-Run `Verify & Fix Sounds` to find missing files.
+跑一次 `校验并修复音效` 能找出缺失文件。
 
-### Smart Merge finds no matches
+### 智能迁移找不到匹配
 
-Common causes:
+常见原因：旧过滤器里没有可迁移的自定义音效；两边块结构差异太大；置信度阈值太高。
+把置信度调低再试，并仔细审阅结果。
 
-- The old filter has no custom sound rules to transfer.
-- The filters have very different block structure.
-- The confidence threshold is too high.
+### 智能迁移搬错了音效
 
-Try lowering the confidence slider and review the results carefully.
+执行前先把拿不准的匹配拒掉。只对高置信度用自动通过，中等和低置信度逐条人工过。
 
-### Smart Merge transferred the wrong sound
+### 颜色看不见或太淡
 
-Reject uncertain matches before executing. Use auto-approve only for high
-confidence matches, then manually review medium and low confidence rows.
+调高 alpha。`255` 完全不透明，数值越低越透明。
 
-### Colors are invisible or too faint
+### 打包立刻失败
 
-Raise the alpha value. `255` is fully opaque, and low values are transparent.
+检查：PyInstaller 是否安装、`version.txt` 是否存在、根目录是否有 `.ico`。
 
-### Build fails immediately
+## 后续可以做的事
 
-Check that:
-
-- PyInstaller is installed.
-- `version.txt` exists.
-- An `.ico` file exists in the project root.
-
-## Notes For Future Work
-
-Useful improvements would be:
-
-- A real undo/redo stack.
-- Manual block mapping in Smart Merge.
-- Optional color/effect/minimap transfer in Smart Merge.
-- A UI for color templates from `data/color_templates/templates.json`.
-- A generated `requirements.txt`.
-- Automated tests for parser, save/backup behavior, and smart merge scoring.
-
+- 全局的撤销/重做栈（目前只有经济档次有自己的操作历史）。
+- 智能迁移支持手工指定块对应关系。
+- 智能迁移可选迁移颜色/特效/小地图。
+- `data/color_templates/templates.json` 的可视化编辑界面。
+- 对解析器、保存/备份行为、迁移评分补自动化测试。

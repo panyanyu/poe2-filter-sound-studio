@@ -331,13 +331,13 @@ class ThemeManager:
             fieldbackground=pal.tree_bg,
             rowheight=28,
             bordercolor=pal.border,
-            font=("Segoe UI", 10),
+            font=("Microsoft YaHei UI", 10),
         )
         self._style.configure(
             "Treeview.Heading",
             background=pal.tree_heading_bg,
             foreground=pal.tree_heading_fg,
-            font=("Segoe UI", 10, "bold"),
+            font=("Microsoft YaHei UI", 10, "bold"),
         )
         self._style.map(
             "Treeview",
@@ -364,7 +364,7 @@ class ThemeManager:
                     elif role == "group_header":
                         tree.tag_configure(tag, background=pal.group_header_bg,
                                            foreground=pal.group_header_fg,
-                                           font=("Segoe UI", 10, "bold"))
+                                           font=("Microsoft YaHei UI", 10, "bold"))
                     elif role == "smart":
                         tree.tag_configure(tag, foreground=pal.smart_fg)
                     elif role == "text_muted":

@@ -21,6 +21,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from economy_tier.directive_value_validator import MINIMAP_SHAPES, NAMED_COLORS
+from core.zh import NONE_LABEL, color_label, color_value, shape_label, shape_value
 from economy_tier.economy_tier_data import TIER_ORDER
 from economy_tier.errors import TemplateError
 from economy_tier.visual_template_loader import (
@@ -31,9 +32,9 @@ from economy_tier.visual_template_loader import (
 )
 from ui.dialogs import ColorPickerDialog
 
-_NONE = "None"
-_BEAM_COLORS = [_NONE, *NAMED_COLORS]
-_MM_SIZES = [_NONE, "0", "1", "2"]
+_NONE = "None"  # 内部哨兵，显示为「（无）」
+_BEAM_COLORS = [NONE_LABEL, *[color_label(c) for c in NAMED_COLORS]]
+_MM_SIZES = [NONE_LABEL, "0", "1", "2"]
 
 # Fallback style for a tier the starting template doesn't define.
 _DEFAULT = TierStyle(
@@ -68,7 +69,7 @@ class _TierStyleEditor:
         wrapper = ctk.CTkFrame(self.dlg, fg_color=self.pal.panel)
         wrapper.pack(fill="both", expand=True, padx=12, pady=12)
 
-        ctk.CTkLabel(wrapper, text="Edit Tier Styles", font=("Segoe UI Semibold", 14)).pack(
+        ctk.CTkLabel(wrapper, text="编辑档次样式", font=("Microsoft YaHei UI", 14, "bold")).pack(
             anchor="w"
         )
         ctk.CTkLabel(
@@ -86,7 +87,7 @@ class _TierStyleEditor:
         # Name row.
         name_row = ctk.CTkFrame(wrapper, fg_color="transparent")
         name_row.pack(fill="x", pady=(0, 6))
-        ctk.CTkLabel(name_row, text="Preset name:").pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(name_row, text="预设名称：").pack(side="left", padx=(0, 6))
         self.name_var = tk.StringVar(
             value=self.start_name if self.is_user_start else f"{self.start_name} (copy)"
         )
@@ -97,7 +98,7 @@ class _TierStyleEditor:
 
         app._setup_dialog(
             self.dlg,
-            title="Edit Tier Styles",
+            title="编辑档次样式",
             default_size=(1040, 760),
             min_size=(900, 600),
         )
@@ -137,7 +138,7 @@ class _TierStyleEditor:
             "Preview",
         ]
         for col, text in enumerate(headers):
-            ctk.CTkLabel(frame, text=text, font=("Segoe UI Semibold", 10)).grid(
+            ctk.CTkLabel(frame, text=text, font=("Microsoft YaHei UI", 10, "bold")).grid(
                 row=0, column=col, padx=4, pady=(2, 6), sticky="w"
             )
 
@@ -145,7 +146,7 @@ class _TierStyleEditor:
         for r, tier in enumerate(TIER_ORDER, start=1):
             st = self.state[tier]
             w: dict = {}
-            ctk.CTkLabel(frame, text=tier, font=("Segoe UI Semibold", 10)).grid(
+            ctk.CTkLabel(frame, text=tier, font=("Microsoft YaHei UI", 10, "bold")).grid(
                 row=r, column=0, padx=4, pady=3, sticky="w"
             )
 
@@ -163,7 +164,10 @@ class _TierStyleEditor:
                 row=r, column=4, padx=3, pady=3
             )
 
-            beam_var = tk.StringVar(value=st["beam_color"])
+            beam_var = tk.StringVar(
+                value=NONE_LABEL if st["beam_color"] in (_NONE, NONE_LABEL)
+                else color_label(st["beam_color"])
+            )
             w["beam_var"] = beam_var
             ctk.CTkOptionMenu(
                 frame,
@@ -185,9 +189,11 @@ class _TierStyleEditor:
 
             mm_frame = ctk.CTkFrame(frame, fg_color="transparent")
             mm_frame.grid(row=r, column=7, padx=3, pady=3, sticky="w")
-            size_var = tk.StringVar(value=st["mm_size"])
-            mmcol_var = tk.StringVar(value=st["mm_color"])
-            shape_var = tk.StringVar(value=st["mm_shape"])
+            size_var = tk.StringVar(
+                value=NONE_LABEL if st["mm_size"] in (_NONE, NONE_LABEL) else st["mm_size"]
+            )
+            mmcol_var = tk.StringVar(value=color_label(st["mm_color"]))
+            shape_var = tk.StringVar(value=shape_label(st["mm_shape"]))
             w["mm_size_var"], w["mm_color_var"], w["mm_shape_var"] = (
                 size_var,
                 mmcol_var,
@@ -202,20 +208,20 @@ class _TierStyleEditor:
             ).pack(side="left", padx=1)
             ctk.CTkOptionMenu(
                 mm_frame,
-                values=list(NAMED_COLORS),
+                values=[color_label(c) for c in NAMED_COLORS],
                 variable=mmcol_var,
                 width=84,
                 command=lambda _v, t=tier: self._on_change(t),
             ).pack(side="left", padx=1)
             ctk.CTkOptionMenu(
                 mm_frame,
-                values=list(MINIMAP_SHAPES),
+                values=[shape_label(c) for c in MINIMAP_SHAPES],
                 variable=shape_var,
                 width=110,
                 command=lambda _v, t=tier: self._on_change(t),
             ).pack(side="left", padx=1)
 
-            preview = tk.Label(frame, text=f" {tier} item ", font=("Segoe UI", 10, "bold"))
+            preview = tk.Label(frame, text=f" {tier} 档次物品 ", font=("Microsoft YaHei UI", 10, "bold"))
             preview.grid(row=r, column=8, padx=6, pady=3, sticky="w")
             w["preview"] = preview
             self.widgets[tier] = w
@@ -243,7 +249,7 @@ class _TierStyleEditor:
 
         ColorPickerDialog(
             self.dlg,
-            title=f"{tier} — {key} colour",
+            title=f"{tier} — {key} 颜色",
             initial_color=tuple(self.state[tier][key]),
             callback=cb,
         )
@@ -255,11 +261,13 @@ class _TierStyleEditor:
     def _on_change(self, tier):
         w = self.widgets[tier]
         st = self.state[tier]
-        st["beam_color"] = w["beam_var"].get()
+        _beam = w["beam_var"].get()
+        st["beam_color"] = _NONE if _beam == NONE_LABEL else color_value(_beam)
         st["beam_temp"] = bool(w["temp_var"].get())
-        st["mm_size"] = w["mm_size_var"].get()
-        st["mm_color"] = w["mm_color_var"].get()
-        st["mm_shape"] = w["mm_shape_var"].get()
+        _size = w["mm_size_var"].get()
+        st["mm_size"] = _NONE if _size == NONE_LABEL else _size
+        st["mm_color"] = color_value(w["mm_color_var"].get())
+        st["mm_shape"] = shape_value(w["mm_shape_var"].get())
         self._refresh_preview(tier)
 
     def _refresh_preview(self, tier):
@@ -273,7 +281,7 @@ class _TierStyleEditor:
             fg=_hex(st["text"]),
             highlightthickness=2,
             highlightbackground=_hex(st["border"]),
-            font=("Segoe UI", font_px, "bold"),
+            font=("Microsoft YaHei UI", font_px, "bold"),
         )
 
     # ---------------- save / delete ----------------
@@ -284,7 +292,7 @@ class _TierStyleEditor:
         row.pack(fill="x", pady=(8, 0))
         ctk.CTkButton(
             row,
-            text="Save Preset",
+            text="保存预设",
             command=self._save,
             width=160,
             fg_color=pal.accent,
@@ -294,7 +302,7 @@ class _TierStyleEditor:
         if self.is_user_start:
             ctk.CTkButton(
                 row,
-                text="Delete Preset",
+                text="删除预设",
                 command=self._delete,
                 width=140,
                 fg_color="#7a2a2a",
@@ -303,7 +311,7 @@ class _TierStyleEditor:
             ).pack(side="right", padx=4)
         ctk.CTkButton(
             row,
-            text="Close",
+            text="关闭",
             command=self.dlg.destroy,
             width=110,
             fg_color=pal.panel_alt,
@@ -334,7 +342,7 @@ class _TierStyleEditor:
     def _save(self):
         name = self.name_var.get().strip()
         if not name:
-            messagebox.showwarning("Name required", "Enter a preset name.")
+            messagebox.showwarning("需要名称", "请输入预设名称。")
             return
         # Refuse to overwrite a shipped (non-user) template.
         if not self.controller.templates.is_user(name) and name in self.controller.template_names():
@@ -345,28 +353,28 @@ class _TierStyleEditor:
             )
             return
         if self.controller.templates.is_user(name):
-            if not messagebox.askyesno("Overwrite preset", f"Overwrite your preset '{name}'?"):
+            if not messagebox.askyesno("覆盖预设", f"Overwrite your preset '{name}'?"):
                 return
         try:
             template = self._build_template(name)
         except ValueError:
-            messagebox.showerror("Invalid font size", "Font size must be a whole number (1–60).")
+            messagebox.showerror("字体大小无效", "字体大小必须是 1–60 的整数。")
             return
         try:
             save_user_template(template)
         except TemplateError as exc:
-            messagebox.showerror("Could not save preset", str(exc))
+            messagebox.showerror("无法保存预设", str(exc))
             return
 
         self.controller.reload_templates(select=name)
         if self.on_saved:
             self.on_saved(name)
         self.app._set_status(f"Saved economy tier preset '{name}'.")
-        messagebox.showinfo("Preset saved", f"Saved preset '{name}'. It's now selectable.")
+        messagebox.showinfo("预设已保存", f"Saved preset '{name}'. It's now selectable.")
 
     def _delete(self):
         name = self.start_name
-        if not messagebox.askyesno("Delete preset", f"Delete your preset '{name}'?"):
+        if not messagebox.askyesno("删除预设", f"Delete your preset '{name}'?"):
             return
         if delete_user_template(name):
             self.controller.reload_templates()
@@ -375,7 +383,7 @@ class _TierStyleEditor:
             self.app._set_status(f"Deleted economy tier preset '{name}'.")
             self.dlg.destroy()
         else:
-            messagebox.showinfo("Nothing deleted", f"No user preset named '{name}'.")
+            messagebox.showinfo("未删除任何内容", f"No user preset named '{name}'.")
 
 
 def _hex(rgba) -> str:

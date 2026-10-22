@@ -17,6 +17,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 import customtkinter as ctk
+from core.zh import mode_label, mode_value, conf_label, conf_value
 
 from economy_tier.controller import EconomyTierController, Mode, PreviewModel
 from economy_tier.errors import EconomyTierError
@@ -36,12 +37,12 @@ _CONF_LABELS = ["low", "medium", "high"]
 def open_economy_tier_tools(app, start_mode: str | None = None) -> None:
     """Entry point from main.py. Opens the dialog (optionally on a given mode)."""
     if not getattr(app, "filter_path", "") or not getattr(app, "lines", None):
-        messagebox.showinfo("No filter", "Load a filter file first.")
+        messagebox.showinfo("未加载过滤器", "请先加载过滤器文件。")
         return
     try:
         controller = EconomyTierController(app.filter_path, app.lines)
     except Exception as exc:  # defensive: never crash the host app
-        messagebox.showerror("Economy Tier Visuals", f"Could not start feature:\n{exc}")
+        messagebox.showerror("经济档次视觉", f"Could not start feature:\n{exc}")
         return
     if not controller.available:
         messagebox.showwarning(
@@ -71,8 +72,8 @@ class _EconomyTierDialog:
 
         ctk.CTkLabel(
             wrapper,
-            text=f"Filter: {os.path.basename(app.filter_path)}",
-            font=("Segoe UI Semibold", 13),
+            text=f"过滤器：{os.path.basename(app.filter_path)}",
+            font=("Microsoft YaHei UI", 13, "bold"),
         ).pack(anchor="w")
         ctk.CTkLabel(
             wrapper,
@@ -103,11 +104,11 @@ class _EconomyTierDialog:
 
         # Initial mode + first preview.
         if start_mode in _DIALOG_MODES:
-            self.mode_var.set(start_mode)
+            self.mode_var.set(mode_label(start_mode))
         self._refresh_preview()
 
         app._setup_dialog(
-            self.dlg, title="Economy Tier Visuals", default_size=(980, 800), min_size=(860, 640)
+            self.dlg, title="经济档次视觉", default_size=(980, 800), min_size=(860, 640)
         )
 
     # ---------------- controls ----------------
@@ -117,17 +118,17 @@ class _EconomyTierDialog:
         row = ctk.CTkFrame(parent, fg_color=pal.panel_alt)
         row.pack(fill="x", pady=(2, 6))
 
-        ctk.CTkLabel(row, text="Mode:").grid(row=0, column=0, padx=(8, 4), pady=8, sticky="w")
-        self.mode_var = tk.StringVar(value=Mode.PREVIEW.value)
+        ctk.CTkLabel(row, text="模式：").grid(row=0, column=0, padx=(8, 4), pady=8, sticky="w")
+        self.mode_var = tk.StringVar(value=mode_label(Mode.PREVIEW.value))
         ctk.CTkOptionMenu(
             row,
-            values=_DIALOG_MODES,
+            values=[mode_label(m) for m in _DIALOG_MODES],
             variable=self.mode_var,
             command=lambda _v: self._refresh_preview(),
             width=320,
         ).grid(row=0, column=1, padx=4, pady=8, sticky="w")
 
-        ctk.CTkLabel(row, text="Template:").grid(row=0, column=2, padx=(16, 4), pady=8, sticky="w")
+        ctk.CTkLabel(row, text="模板：").grid(row=0, column=2, padx=(16, 4), pady=8, sticky="w")
         self.template_var = tk.StringVar(value=self.controller.template_name or "")
         self._template_menu = ctk.CTkOptionMenu(
             row,
@@ -137,17 +138,17 @@ class _EconomyTierDialog:
             width=240,
         )
         self._template_menu.grid(row=0, column=3, padx=4, pady=8, sticky="w")
-        ctk.CTkButton(row, text="🎨 Edit Tier Styles…", command=self._open_editor, width=150).grid(
+        ctk.CTkButton(row, text="🎨 编辑档次样式…", command=self._open_editor, width=150).grid(
             row=0, column=4, padx=(8, 4), pady=8, sticky="w"
         )
 
-        ctk.CTkLabel(row, text="Min confidence:").grid(
+        ctk.CTkLabel(row, text="最低置信度：").grid(
             row=0, column=5, padx=(16, 4), pady=8, sticky="w"
         )
-        self.conf_var = tk.StringVar(value=self._pref("economy_tier_min_confidence", "medium"))
+        self.conf_var = tk.StringVar(value=conf_label(self._pref("economy_tier_min_confidence", "medium")))
         ctk.CTkOptionMenu(
             row,
-            values=_CONF_LABELS,
+            values=[conf_label(c) for c in _CONF_LABELS],
             variable=self.conf_var,
             command=lambda _v: self._refresh_preview(),
             width=120,
@@ -156,7 +157,7 @@ class _EconomyTierDialog:
         # Transfer checkboxes.
         toggles = ctk.CTkFrame(parent, fg_color=pal.panel_alt)
         toggles.pack(fill="x", pady=(0, 6))
-        ctk.CTkLabel(toggles, text="Transfer:", font=("Segoe UI Semibold", 11)).pack(
+        ctk.CTkLabel(toggles, text="迁移内容：", font=("Microsoft YaHei UI", 11, "bold")).pack(
             side="left", padx=(8, 8), pady=6
         )
 
@@ -201,7 +202,7 @@ class _EconomyTierDialog:
         if self.settings is None:
             return
         s = self.settings
-        s.economy_tier_min_confidence = self.conf_var.get()
+        s.economy_tier_min_confidence = conf_value(self.conf_var.get())
         s.economy_tier_default_template = self.template_var.get()
         s.economy_tier_apply_text = self.t_text.get()
         s.economy_tier_apply_bg = self.t_bg.get()
@@ -249,7 +250,7 @@ class _EconomyTierDialog:
 
     def _build_preview_area(self, parent):
         pal = self.pal
-        self.summary_label = ctk.CTkLabel(parent, text="", justify="left", font=("Segoe UI", 11))
+        self.summary_label = ctk.CTkLabel(parent, text="", justify="left", font=("Microsoft YaHei UI", 11))
         self.summary_label.pack(anchor="w", pady=(4, 2))
 
         self.warn_label = ctk.CTkLabel(
@@ -262,13 +263,13 @@ class _EconomyTierDialog:
         cols = ("line", "tier", "conf", "reason", "old", "new", "sound")
         self.tree = ttk.Treeview(tf, columns=cols, show="headings", height=14, selectmode="browse")
         headers = {
-            "line": ("Lines", 80),
-            "tier": ("Tier", 110),
-            "conf": ("Conf", 70),
-            "reason": ("Reason", 230),
-            "old": ("Old visuals", 120),
-            "new": ("New visuals", 120),
-            "sound": ("Sounds kept", 90),
+            "line": ("行号", 80),
+            "tier": ("档次", 110),
+            "conf": ("置信度", 70),
+            "reason": ("原因", 230),
+            "old": ("原视觉", 120),
+            "new": ("新视觉", 120),
+            "sound": ("音效保留", 90),
         }
         for c, (txt, w) in headers.items():
             self.tree.heading(c, text=txt)
@@ -280,7 +281,7 @@ class _EconomyTierDialog:
 
     def _refresh_preview(self):
         try:
-            mode = Mode(self.mode_var.get())
+            mode = Mode(mode_value(self.mode_var.get()))
         except ValueError:
             mode = Mode.PREVIEW
 
@@ -290,10 +291,10 @@ class _EconomyTierDialog:
 
         try:
             pv: PreviewModel = self.controller.build_preview(
-                mode, self._transfer(), self.conf_var.get()
+                mode, self._transfer(), conf_value(self.conf_var.get())
             )
         except EconomyTierError as exc:
-            self.summary_label.configure(text=f"Cannot preview: {exc}")
+            self.summary_label.configure(text=f"无法预览：{exc}")
             return
 
         self.summary_label.configure(
@@ -345,7 +346,7 @@ class _EconomyTierDialog:
             self.warn_label.configure(text="")
         else:
             self.summary_label.configure(
-                text="No previous economy-tier operation to restore for this file."
+                text="该文件没有可恢复的上一次经济档次操作。"
             )
             self.warn_label.configure(text="")
         for i in self.tree.get_children():
@@ -354,7 +355,7 @@ class _EconomyTierDialog:
     @staticmethod
     def _fmt_tiers(counts: dict) -> str:
         if not counts:
-            return "(none)"
+            return "（无）"
         order = ["SS_CHANCE_BASE", "SS", "S", "A", "B", "C", "D", "F"]
         return ", ".join(f"{t}:{counts[t]}" for t in order if t in counts)
 
@@ -366,7 +367,7 @@ class _EconomyTierDialog:
         row.pack(fill="x", pady=(8, 0))
         ctk.CTkButton(
             row,
-            text="Run Selected Mode",
+            text="执行所选模式",
             command=self._run,
             width=200,
             fg_color=pal.accent,
@@ -375,7 +376,7 @@ class _EconomyTierDialog:
         ).pack(side="right", padx=4)
         ctk.CTkButton(
             row,
-            text="Refresh Preview",
+            text="刷新预览",
             command=self._refresh_preview,
             width=150,
             fg_color=pal.panel_alt,
@@ -384,7 +385,7 @@ class _EconomyTierDialog:
         ).pack(side="right", padx=4)
         ctk.CTkButton(
             row,
-            text="Close",
+            text="关闭",
             command=self.dlg.destroy,
             width=110,
             fg_color=pal.panel_alt,
@@ -420,10 +421,10 @@ class _EconomyTierDialog:
                 "A verified backup is created first and sound directives are preserved.",
             ):
                 return
-            res = self.controller.apply(mode, self._transfer(), self.conf_var.get())
+            res = self.controller.apply(mode, self._transfer(), conf_value(self.conf_var.get()))
 
         if not res.ok:
-            messagebox.showerror("Economy Tier Visuals", res.message)
+            messagebox.showerror("经济档次视觉", res.message)
             self.app._set_status(res.message)
             return
 
@@ -435,7 +436,7 @@ class _EconomyTierDialog:
         if res.backup_path:
             msg += f"  (backup: {os.path.basename(res.backup_path)})"
         self.app._set_status(msg)
-        messagebox.showinfo("Economy Tier Visuals", msg)
+        messagebox.showinfo("经济档次视觉", msg)
         self._refresh_preview()
 
 

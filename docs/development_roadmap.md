@@ -1,50 +1,42 @@
-# Development Roadmap
+# 开发路线图
 
-Status of planned engineering work. Items implemented as part of the Economy
-Tier Visual Preset feature are marked **done**; the rest are future work.
+计划中的工程进度。凡是作为「经济档次视觉预设」一部分交付的，都标为**已完成**；
+其余是后续工作。
 
-## Economy Tier Visual Preset
+## 经济档次视觉预设
 
-**Done**
-- Economy tier classification (SS → F + `SS_CHANCE_BASE`) reading
-  `data/economy_tiers/poe2_0_5_tiers.json`.
-- Round-trip-fidelity parser (`economy_tier/filter_parser.py`):
-  `serialize(parse(text)) == text` byte-for-byte; preserves CRLF/LF, BOM,
-  indentation, comments, blank runs; operator-aware (`==` vs substring).
-- Five-mode dropdown + Tools-menu dialog; preview-before-save with full diff.
-- Idempotent re-apply via sentinel markers + structural-diff guard that aborts on
-  any unexpected delta.
-- Sound preservation (locked); never edits `PlayAlertSound*` / `CustomAlertSound*`
-  / `DisableDropSound`; post-edit validation proves it.
-- Verified, spec-named backups; same-dir atomic replace; external-edit detection;
-  post-write verification.
-- Disk-persisted operation history; `Restore Previous Visuals` (itself undoable).
-- Schema-validated, versioned, staleness-warned, confidence-gated data/template
-  loading with graceful feature-disable on bad data.
-- Color/visual **templates UI**: Template dropdown + per-kind transfer toggles,
-  plus an in-app **per-tier style editor** (🎨 Edit Tier Styles…) that saves named
-  presets (colours, font, PlayEffect beam, MinimapIcon) to the user's config dir.
-- Offline runtime + separate maintainer updater (`tools/update_economy_tiers.py`).
-- **Generated `requirements.txt`** (+ `requirements-dev.txt`) from actual imports;
-  PyInstaller spec/script bundle the new data + schemas.
-- **Automated tests** for parser (round-trip incl. Hypothesis property tests),
-  classifier, patcher, save/backup, validator (incl. a negative diff-guard test),
-  controller, golden/snapshot corpus, and a 15k-line benchmark — ≥90% coverage on
-  the new modules. `mypy --strict`, `ruff`, and `black` clean on the new code.
-- **Smart-merge scoring tests** added (the Smart Merge feature itself is unchanged).
+**已完成**
+- 经济档次判定（SS → F，另有 `SS_CHANCE_BASE`），数据来自
+  `data/economy_tiers/poe2_0_5_tiers.json`。
+- 字节级往返保真的解析器（`economy_tier/filter_parser.py`）：
+  `serialize(parse(text)) == text`，保留 CRLF/LF、BOM、缩进、注释、连续空行；
+  区分 `==` 与子串匹配。
+- 五模式下拉框 + 工具菜单对话框；保存前完整差异预览。
+- 通过哨兵标记实现幂等重复应用，并带结构差异守卫（出现任何非预期变化就中止）。
+- 音效保护（锁定）：绝不修改 `PlayAlertSound*` / `CustomAlertSound*` /
+  `DisableDropSound`；改后校验会证明这一点。
+- 带校验、按规范命名的备份；同目录原子替换；外部改动检测；写入后校验。
+- 落盘的操作历史与「恢复上一次视觉」（恢复本身也可撤销）。
+- schema 校验、带版本、带过期提醒、按置信度门槛的数据/模板加载，数据异常时优雅降级
+  （直接关掉该功能而不是崩溃）。
+- 颜色/视觉**模板界面**：模板下拉框 + 分项迁移开关，外加应用内的
+  **每档次样式编辑器**（🎨 编辑档次样式…），可把颜色、字体、PlayEffect 光柱、
+  MinimapIcon 存成命名预设到用户配置目录。
+- 运行时完全离线；维护者另有独立更新脚本 `tools/update_economy_tiers.py`。
+- **自动生成 `requirements.txt`**（以及 `requirements-dev.txt`）；PyInstaller 打包时
+  一并带上新数据与 schema。
+- **自动化测试**：解析器（含 Hypothesis 性质测试的往返）、判定器、补丁器、保存/备份、
+  校验器（含一个反向验证差异守卫的用例）、控制器、黄金样本语料，以及 1.5 万行基准
+  测试 —— 新模块覆盖率 ≥90%。新代码通过 `mypy --strict`、`ruff`、`black`。
+- **智能迁移评分测试**已补上（迁移功能本身未改）。
 
-## Future work
+## 后续工作
 
-- **Real undo/redo stack** spanning all editing features (not just the
-  economy-tier op-history), with multi-step redo.
-- **Manual block mapping** in Smart Merge: let the user hand-pair old/new blocks
-  the scorer missed.
-- **Optional color / effect / minimap transfer in Smart Merge** (currently it
-  transfers sounds only; the executor has a placeholder for colours).
-- **Richer color-template editor UI**: the economy-tier per-tier editor exists;
-  extend visual editing to the *manual* colour templates too, and add
-  drag-to-reorder / import-export of economy-tier presets.
-- **Block-splitting** so a mixed block can be split by tier instead of taking the
-  highest tier present (only behind an explicit, safe opt-in).
-- **Per-category template overrides** if users want, say, currency to deviate from
-  the uniform tier look.
+- **真正的全局撤销/重做栈**，覆盖所有编辑功能（目前只有经济档次有自己的操作历史），
+  并支持多步重做。
+- **智能迁移的手工块映射**：让用户手动配对评分器没匹配上的新旧块。
+- **智能迁移可选迁移颜色/特效/小地图**（目前只迁音效；执行器里给颜色留了占位）。
+- **更丰富的颜色模板编辑界面**：经济档次的每档次编辑器已经有了；把手动颜色模板也
+  纳入可视化编辑，并加上拖拽排序、经济档次预设的导入/导出。
+- **块拆分**：把一个混合块按档次拆开，而不是取其中最高档次（只放在显式的安全开关后）。
+- **按分类的模板覆盖**：如果用户想让通货偏离统一档次观感。

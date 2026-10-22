@@ -125,7 +125,7 @@ def iter_filter_blocks(lines: List[str]) -> Iterator[RawBlock]:
     off (those belong to the next section). The block's ``start_line`` — the one
     we ever edit — is never affected by that trimming.
     """
-    section = "(uncategorized)"
+    section = "（未分类）"
     subsection = ""
     start: Optional[int] = None
     block_section = section
@@ -263,7 +263,7 @@ def _summarize_sounds(stripped_lines: List[str]) -> Tuple[str, bool]:
         return ", ".join(active), True
     if disabled:
         return f"(disabled) {', '.join(disabled)}", False
-    return "No sound", False
+    return "无音效", False
 
 
 def assess_risk(*, header: str, section: str, subsection: str,
@@ -414,8 +414,8 @@ def build_block_view(raw: RawBlock, index: int) -> VisibilityBlockView:
 
 # Coarse, beginner-friendly buckets used by the tab's "Smart group" dropdown.
 SMART_GROUPS = [
-    "Currency", "Waystones/Maps", "Uniques", "Gems", "Gear",
-    "Flasks/Charms", "Runes/Soul Cores/Idols", "Other",
+    "通货", "引路石/地图", "传奇", "技能宝石", "装备",
+    "药剂/咒符", "符文/灵魂核心/神像", "其他",
 ]
 
 
@@ -430,21 +430,21 @@ def smart_group_for(view: VisibilityBlockView) -> str:
         return any(w in hay for w in words)
 
     if has("currency", "orb", "shard", "catalyst"):
-        return "Currency"
+        return "通货"
     if has("waystone", "map", "tablet", "fragment", "splinter"):
-        return "Waystones/Maps"
+        return "引路石/地图"
     if has("rune", "soul core", "idol"):
-        return "Runes/Soul Cores/Idols"
+        return "符文/灵魂核心/神像"
     if has("unique"):
-        return "Uniques"
+        return "传奇"
     if has("gem", "jewel"):
-        return "Gems"
+        return "技能宝石"
     if has("flask", "charm"):
-        return "Flasks/Charms"
+        return "药剂/咒符"
     if has("armour", "weapon", "gear", "jewellery", "ring", "amulet",
             "belt", "boots", "gloves", "helmet", "body armour", "shield"):
-        return "Gear"
-    return "Other"
+        return "装备"
+    return "其他"
 
 
 # ==================== Manager / controller ====================
@@ -525,7 +525,7 @@ class VisibilityManager:
             return ", ".join(view.classes[:4])
         if view.rarity and view.rarity != "Any rarity":
             return f"All {view.rarity}"
-        return view.category or "(no item criteria)"
+        return view.category or "（无物品条件）"
 
     # ---- applying ----
 
