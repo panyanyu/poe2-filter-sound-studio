@@ -74,19 +74,19 @@ class VisibilityManagerTab:
     # Treeview columns (id -> heading label).
     COLUMNS = [
         ("pending", "Δ"),
-        ("current", "Now"),
-        ("desired", "Will be"),
-        ("risk", "Risk"),
-        ("category", "Section"),
-        ("subsection", "Subsection"),
-        ("rarity", "Rarity"),
-        ("klass", "Class"),
-        ("base", "BaseType"),
-        ("levels", "Levels"),
-        ("stack", "Stack"),
-        ("sound", "Sound"),
-        ("fx", "Effect / Minimap"),
-        ("context", "Item context"),
+        ("current", "当前"),
+        ("desired", "目标"),
+        ("risk", "风险"),
+        ("category", "章节"),
+        ("subsection", "子章节"),
+        ("rarity", "稀有度"),
+        ("klass", "类别"),
+        ("base", "基底"),
+        ("levels", "等级"),
+        ("stack", "堆叠"),
+        ("sound", "音效"),
+        ("fx", "光柱 / 小地图"),
+        ("context", "物品条件"),
     ]
 
     def __init__(self, parent, app):
@@ -556,7 +556,7 @@ class VisibilityManagerTab:
         table_wrap = ctk.CTkFrame(wrap, corner_radius=8)
         table_wrap.pack(fill="both", expand=True, padx=6, pady=(0, 8))
         cols = ("line", "category", "summary", "from", "to", "risk")
-        labels = ("Line", "Section", "Item", "From", "To", "Risk")
+        labels = ("行号", "章节", "物品", "从", "到", "风险")
         tv = ttk.Treeview(table_wrap, columns=cols, show="headings", height=10)
         for c, l in zip(cols, labels):
             tv.heading(c, text=l)

@@ -21,6 +21,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from economy_tier.directive_value_validator import MINIMAP_SHAPES, NAMED_COLORS
+from core.zh import NONE_LABEL, color_label, color_value, shape_label, shape_value
 from economy_tier.economy_tier_data import TIER_ORDER
 from economy_tier.errors import TemplateError
 from economy_tier.visual_template_loader import (
@@ -31,9 +32,9 @@ from economy_tier.visual_template_loader import (
 )
 from ui.dialogs import ColorPickerDialog
 
-_NONE = "None"
-_BEAM_COLORS = [_NONE, *NAMED_COLORS]
-_MM_SIZES = [_NONE, "0", "1", "2"]
+_NONE = "None"  # 内部哨兵，显示为「（无）」
+_BEAM_COLORS = [NONE_LABEL, *[color_label(c) for c in NAMED_COLORS]]
+_MM_SIZES = [NONE_LABEL, "0", "1", "2"]
 
 # Fallback style for a tier the starting template doesn't define.
 _DEFAULT = TierStyle(
@@ -163,7 +164,10 @@ class _TierStyleEditor:
                 row=r, column=4, padx=3, pady=3
             )
 
-            beam_var = tk.StringVar(value=st["beam_color"])
+            beam_var = tk.StringVar(
+                value=NONE_LABEL if st["beam_color"] in (_NONE, NONE_LABEL)
+                else color_label(st["beam_color"])
+            )
             w["beam_var"] = beam_var
             ctk.CTkOptionMenu(
                 frame,
@@ -185,9 +189,11 @@ class _TierStyleEditor:
 
             mm_frame = ctk.CTkFrame(frame, fg_color="transparent")
             mm_frame.grid(row=r, column=7, padx=3, pady=3, sticky="w")
-            size_var = tk.StringVar(value=st["mm_size"])
-            mmcol_var = tk.StringVar(value=st["mm_color"])
-            shape_var = tk.StringVar(value=st["mm_shape"])
+            size_var = tk.StringVar(
+                value=NONE_LABEL if st["mm_size"] in (_NONE, NONE_LABEL) else st["mm_size"]
+            )
+            mmcol_var = tk.StringVar(value=color_label(st["mm_color"]))
+            shape_var = tk.StringVar(value=shape_label(st["mm_shape"]))
             w["mm_size_var"], w["mm_color_var"], w["mm_shape_var"] = (
                 size_var,
                 mmcol_var,
@@ -202,14 +208,14 @@ class _TierStyleEditor:
             ).pack(side="left", padx=1)
             ctk.CTkOptionMenu(
                 mm_frame,
-                values=list(NAMED_COLORS),
+                values=[color_label(c) for c in NAMED_COLORS],
                 variable=mmcol_var,
                 width=84,
                 command=lambda _v, t=tier: self._on_change(t),
             ).pack(side="left", padx=1)
             ctk.CTkOptionMenu(
                 mm_frame,
-                values=list(MINIMAP_SHAPES),
+                values=[shape_label(c) for c in MINIMAP_SHAPES],
                 variable=shape_var,
                 width=110,
                 command=lambda _v, t=tier: self._on_change(t),
@@ -255,11 +261,13 @@ class _TierStyleEditor:
     def _on_change(self, tier):
         w = self.widgets[tier]
         st = self.state[tier]
-        st["beam_color"] = w["beam_var"].get()
+        _beam = w["beam_var"].get()
+        st["beam_color"] = _NONE if _beam == NONE_LABEL else color_value(_beam)
         st["beam_temp"] = bool(w["temp_var"].get())
-        st["mm_size"] = w["mm_size_var"].get()
-        st["mm_color"] = w["mm_color_var"].get()
-        st["mm_shape"] = w["mm_shape_var"].get()
+        _size = w["mm_size_var"].get()
+        st["mm_size"] = _NONE if _size == NONE_LABEL else _size
+        st["mm_color"] = color_value(w["mm_color_var"].get())
+        st["mm_shape"] = shape_value(w["mm_shape_var"].get())
         self._refresh_preview(tier)
 
     def _refresh_preview(self, tier):

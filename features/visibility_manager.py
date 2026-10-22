@@ -125,7 +125,7 @@ def iter_filter_blocks(lines: List[str]) -> Iterator[RawBlock]:
     off (those belong to the next section). The block's ``start_line`` — the one
     we ever edit — is never affected by that trimming.
     """
-    section = "(uncategorized)"
+    section = "（未分类）"
     subsection = ""
     start: Optional[int] = None
     block_section = section
@@ -263,7 +263,7 @@ def _summarize_sounds(stripped_lines: List[str]) -> Tuple[str, bool]:
         return ", ".join(active), True
     if disabled:
         return f"(disabled) {', '.join(disabled)}", False
-    return "No sound", False
+    return "无音效", False
 
 
 def assess_risk(*, header: str, section: str, subsection: str,
@@ -525,7 +525,7 @@ class VisibilityManager:
             return ", ".join(view.classes[:4])
         if view.rarity and view.rarity != "Any rarity":
             return f"All {view.rarity}"
-        return view.category or "(no item criteria)"
+        return view.category or "（无物品条件）"
 
     # ---- applying ----
 

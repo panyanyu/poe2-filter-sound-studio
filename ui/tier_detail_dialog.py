@@ -29,6 +29,9 @@ from core.user_overrides import (
     UserOverrides, BlockOverride, block_signature, save_overrides,
     friendly_block_name,
 )
+from core.zh import (
+    NONE_LABEL, color_label, color_value, shape_label, shape_value,
+)
 from ui.dialogs import ColorPickerDialog
 
 
@@ -47,7 +50,7 @@ _REASSIGN_TIERS = (
     ValueTier.MID, ValueTier.LOW, ValueTier.JUNK,
 )
 
-_NONE_LABEL = "(none)"
+_NONE_LABEL = NONE_LABEL
 
 
 def open_tier_detail(app, tier: ValueTier, plan: List[StyleChange],
@@ -173,9 +176,9 @@ class _TierDetailDialog:
         ctk.CTkLabel(effect_row, text="掉落光柱（PlayEffect）：", width=110, anchor="w").pack(side="left")
         effect_color = self.draft_style.play_effect[0] if self.draft_style.play_effect else _NONE_LABEL
         is_temp = self.draft_style.play_effect[1] if self.draft_style.play_effect else False
-        self._effect_var = tk.StringVar(value=effect_color)
+        self._effect_var = tk.StringVar(value=color_label(effect_color))
         ctk.CTkOptionMenu(
-            effect_row, values=[_NONE_LABEL] + list(POE2_NAMED_COLORS),
+            effect_row, values=[_NONE_LABEL] + [color_label(c) for c in POE2_NAMED_COLORS],
             variable=self._effect_var, command=lambda _v: self._on_style_field_change(),
             width=120,
         ).pack(side="left", padx=(4, 8))
@@ -195,17 +198,17 @@ class _TierDetailDialog:
             sz, c, sh = self.draft_style.minimap
             map_size, map_color, map_shape = str(sz), c, sh
         self._map_size_var = tk.StringVar(value=map_size)
-        self._map_color_var = tk.StringVar(value=map_color)
-        self._map_shape_var = tk.StringVar(value=map_shape)
+        self._map_color_var = tk.StringVar(value=color_label(map_color))
+        self._map_shape_var = tk.StringVar(value=shape_label(map_shape))
         ctk.CTkOptionMenu(map_row, values=["0", "1", "2"],
                           variable=self._map_size_var,
                           command=lambda _v: self._on_style_field_change(),
                           width=60).pack(side="left", padx=(4, 4))
-        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + list(POE2_NAMED_COLORS),
+        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + [color_label(c) for c in POE2_NAMED_COLORS],
                           variable=self._map_color_var,
                           command=lambda _v: self._on_style_field_change(),
                           width=110).pack(side="left", padx=(0, 4))
-        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + list(POE2_MINIMAP_SHAPES),
+        ctk.CTkOptionMenu(map_row, values=[_NONE_LABEL] + [shape_label(c) for c in POE2_MINIMAP_SHAPES],
                           variable=self._map_shape_var,
                           command=lambda _v: self._on_style_field_change(),
                           width=140).pack(side="left")
@@ -382,7 +385,7 @@ class _TierDetailDialog:
 
     def _on_style_field_change(self):
         # PlayEffect.
-        eff = self._effect_var.get()
+        eff = color_value(self._effect_var.get())
         if eff == _NONE_LABEL:
             self.draft_style.play_effect = None
         else:
@@ -390,8 +393,8 @@ class _TierDetailDialog:
 
         # MinimapIcon. If any of the three is "(none)" we treat the whole thing
         # as unset — POE2 needs all three to be a valid icon.
-        color = self._map_color_var.get()
-        shape = self._map_shape_var.get()
+        color = color_value(self._map_color_var.get())
+        shape = shape_value(self._map_shape_var.get())
         if color == _NONE_LABEL or shape == _NONE_LABEL:
             self.draft_style.minimap = None
         else:
@@ -410,12 +413,12 @@ class _TierDetailDialog:
         self._font_var.set(self.draft_style.font_size or 34)
         self._font_value_label.configure(text=str(self._font_var.get()))
         eff = self.draft_style.play_effect
-        self._effect_var.set(eff[0] if eff else _NONE_LABEL)
+        self._effect_var.set(color_label(eff[0]) if eff else _NONE_LABEL)
         self._temp_var.set(bool(eff[1]) if eff else False)
         mi = self.draft_style.minimap
         self._map_size_var.set(str(mi[0]) if mi else "0")
-        self._map_color_var.set(mi[1] if mi else _NONE_LABEL)
-        self._map_shape_var.set(mi[2] if mi else _NONE_LABEL)
+        self._map_color_var.set(color_label(mi[1]) if mi else _NONE_LABEL)
+        self._map_shape_var.set(shape_label(mi[2]) if mi else _NONE_LABEL)
         self._refresh_color_swatches()
         self._refresh_preview()
 

@@ -45,6 +45,7 @@ from core.fonts import install_default_fonts
 from core.zh import (
     appearance_label, appearance_value, palette_label, palette_value,
     mode_label, mode_value, rarity_label, sound_type_label, visibility_label,
+    effect_display, minimap_display,
     rarity_display, tier_label as tier_zh,
 )
 
@@ -1289,7 +1290,7 @@ class FilterSoundEditor:
 
         current_block = []
         start_idx = 0
-        current_section = "(uncategorized)"
+        current_section = "（未分类）"
         current_subsection = ""
         block_section = current_section
         block_subsection = current_subsection
@@ -1373,7 +1374,7 @@ class FilterSoundEditor:
         context = " ; ".join(context_lines)
         return rarity, context, effect_line, minimap_line
 
-    def process_block(self, block, start_idx, category="(uncategorized)", subcategory=""):
+    def process_block(self, block, start_idx, category="（未分类）", subcategory=""):
         """Process a single block - uses patterns from core.parser."""
         rarity, context, effect_line, minimap_line = self._parse_block_meta(block)
         header_line = block[0] if block else ""
@@ -1480,7 +1481,7 @@ class FilterSoundEditor:
                 **extra,
                 "rarity": rarity,
                 "stype": "None",
-                "sound": "No sound",
+                "sound": "无音效",
                 "volume": "",
                 "effect": effect_line.replace("\t","").strip(),
                 "minimap": minimap_line.replace("\t","").strip(),
@@ -1524,8 +1525,8 @@ class FilterSoundEditor:
 
         for idx, entry in enumerate(base_list):
             volume_display = entry["volume"] if entry["volume"] != "" else ""
-            effect_short = entry["effect"].replace("PlayEffect", "").strip()
-            minimap_short = entry["minimap"].replace("MinimapIcon", "").strip()
+            effect_short = effect_display(entry["effect"].replace("PlayEffect", "").strip())
+            minimap_short = minimap_display(entry["minimap"].replace("MinimapIcon", "").strip())
             tag = "oddrow" if idx % 2 else "evenrow"
             self.tree.insert("", "end", values=(
                 entry.get("category", ""),
@@ -4316,7 +4317,7 @@ class FilterSoundEditor:
         pool = self._collect_sound_pool(folder)
         if not pool:
             if messagebox.askyesno(
-                "No sound files",
+                "没有音效文件",
                 f"There are no audio files in:\n  {folder}\n\n"
                 "Open the folder so you can add some?",
             ):
@@ -4606,7 +4607,7 @@ class FilterSoundEditor:
         line("")
         line("Top sections by block count", bold=True)
         for name, n in top_sections:
-            line(f"  {n:>4}   {name or '(uncategorized)'}", muted=True)
+            line(f"  {n:>4}   {name or '（未分类）'}", muted=True)
         line("")
         if top_sounds:
             line("Most-used sound files", bold=True)

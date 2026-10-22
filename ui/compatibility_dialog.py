@@ -86,7 +86,7 @@ class _CompatibilityDialog:
             font=("Microsoft YaHei UI", 13, "bold"),
         ).pack(anchor="w")
 
-        rules_label = report.rules_file or "(no rules file)"
+        rules_label = report.rules_file or "（无规则文件）"
         ctk.CTkLabel(
             main, text=f"规则：{rules_label}",
             text_color=pal.text_muted,

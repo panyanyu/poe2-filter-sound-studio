@@ -167,3 +167,75 @@ RISK_ZH: dict[str, str] = {
 
 def risk_label(value: str) -> str:
     return RISK_ZH.get(value, value)
+
+
+# ---------------------------------------------------------------- 光柱颜色 / 小地图形状
+COLOR_ZH: dict[str, str] = {
+    "Red": "红",
+    "Green": "绿",
+    "Blue": "蓝",
+    "Brown": "棕",
+    "White": "白",
+    "Yellow": "黄",
+    "Cyan": "青",
+    "Grey": "灰",
+    "Orange": "橙",
+    "Pink": "粉",
+    "Purple": "紫",
+}
+
+SHAPE_ZH: dict[str, str] = {
+    "Circle": "圆形",
+    "Diamond": "菱形",
+    "Hexagon": "六边形",
+    "Square": "方形",
+    "Star": "星形",
+    "Triangle": "三角形",
+    "Cross": "十字",
+    "Moon": "月牙",
+    "Raindrop": "水滴",
+    "Kite": "风筝形",
+    "Pentagon": "五边形",
+    "UpsideDownHouse": "倒屋形",
+}
+
+#: 下拉框里代表“不设置”的那一项。
+NONE_LABEL = "（无）"
+
+_COLOR_EN = _reverse(COLOR_ZH)
+_SHAPE_EN = _reverse(SHAPE_ZH)
+
+
+def color_label(value: str) -> str:
+    return COLOR_ZH.get(value, value)
+
+
+def color_value(label: str) -> str:
+    return _COLOR_EN.get(label, label)
+
+
+def shape_label(value: str) -> str:
+    return SHAPE_ZH.get(value, value)
+
+
+def shape_value(label: str) -> str:
+    return _SHAPE_EN.get(label, label)
+
+
+def effect_display(text: str) -> str:
+    """把 ``PlayEffect Red True`` 这种摘要渲染成中文（只用于显示）。"""
+    if not text:
+        return text
+    parts = str(text).split()
+    return " ".join(color_label(p) for p in parts)
+
+
+def minimap_display(text: str) -> str:
+    """把 ``0 Red Circle`` 这种摘要渲染成中文（只用于显示）。"""
+    if not text:
+        return text
+    parts = str(text).split()
+    if len(parts) == 3:
+        size, color, shape = parts
+        return f"{size} {color_label(color)} {shape_label(shape)}"
+    return " ".join(color_label(p) for p in parts)

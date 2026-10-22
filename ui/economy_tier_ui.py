@@ -263,13 +263,13 @@ class _EconomyTierDialog:
         cols = ("line", "tier", "conf", "reason", "old", "new", "sound")
         self.tree = ttk.Treeview(tf, columns=cols, show="headings", height=14, selectmode="browse")
         headers = {
-            "line": ("Lines", 80),
-            "tier": ("Tier", 110),
-            "conf": ("Conf", 70),
-            "reason": ("Reason", 230),
-            "old": ("Old visuals", 120),
-            "new": ("New visuals", 120),
-            "sound": ("Sounds kept", 90),
+            "line": ("行号", 80),
+            "tier": ("档次", 110),
+            "conf": ("置信度", 70),
+            "reason": ("原因", 230),
+            "old": ("原视觉", 120),
+            "new": ("新视觉", 120),
+            "sound": ("音效保留", 90),
         }
         for c, (txt, w) in headers.items():
             self.tree.heading(c, text=txt)
@@ -355,7 +355,7 @@ class _EconomyTierDialog:
     @staticmethod
     def _fmt_tiers(counts: dict) -> str:
         if not counts:
-            return "(none)"
+            return "（无）"
         order = ["SS_CHANCE_BASE", "SS", "S", "A", "B", "C", "D", "F"]
         return ", ".join(f"{t}:{counts[t]}" for t in order if t in counts)
 

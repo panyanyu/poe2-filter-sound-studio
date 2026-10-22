@@ -179,7 +179,7 @@ def friendly_block_name(block_lines: List[str], max_basetypes: int = 5) -> str:
         if tag_match:
             label = f"Catch-all: {tag_match.group(1)}"
         else:
-            label = "(no item criteria)"
+            label = "（无物品条件）"
 
     # Useful qualifiers tacked on the right.
     qualifiers = []
