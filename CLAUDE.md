@@ -9,14 +9,14 @@
     directly on `main`), push the branch, and open or update the pull request
     with a clear title and description — without being asked each time.
   - Use the `gh` CLI for PRs/issues (the user is authenticated as
-    `xtheredshirtx`). Remote is `origin`
-    (https://github.com/xtheredshirtx/poe2-filter-sound-studio).
+    `panyanyu`). Remote is `origin`
+    (https://github.com/panyanyu/poe2-filter-sound-studio).
   - Explain in plain language what was pushed and give the PR link; don't assume
     git knowledge.
   - Still pause for confirmation before anything destructive (force-push, history
     rewrite, deleting branches, merging a PR).
-  - Commit author identity for this repo: `xtheredshirtx
-    <xtheredshirtx@users.noreply.github.com>` (set repo-locally).
+  - Commit author identity for this repo: `pyy <704508940@qq.com>` (set
+    repo-locally).
 
 ## Project layout
 

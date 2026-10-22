@@ -117,7 +117,7 @@ Show/Hide blocks. This session added a thick layer of *visual* and
 - File IO: [core/file_operations.py](core/file_operations.py) → `load_filter_file`,
   `save_filter_file` (atomic tmp+replace), `make_backup` (timestamped + rotated).
 
-The user (`xtheredshirtx`) does not use git/GitHub directly — Claude handles
+The user (`panyanyu`) does not use git/GitHub directly — Claude handles
 all VCS via the `gh` CLI per `CLAUDE.md`.
 
 ---
@@ -491,10 +491,9 @@ python -c "from core.user_overrides import block_signature; print(block_signatur
   being asked, on a feature branch, never directly on `main`.
 - Pause before destructive operations (force-push, history rewrite, branch
   delete, PR merge).
-- `gh` CLI auth as `xtheredshirtx`. Remote `origin` =
-  `https://github.com/xtheredshirtx/poe2-filter-sound-studio`.
-- Commit author: `xtheredshirtx <xtheredshirtx@users.noreply.github.com>`
-  (set repo-local).
+- `gh` CLI auth as `panyanyu`. Remote `origin` =
+  `https://github.com/panyanyu/poe2-filter-sound-studio`.
+- Commit author: `pyy <704508940@qq.com>` (set repo-local).
 
 ---
 
